@@ -45,7 +45,7 @@ class Session
 
     #Handle sign-in requests where the user does not exist
     def no_user
-        choice = $prompt.select("That user doesn't exist.", %w("Try again" "Create account"))
+        choice = $prompt.select("That user doesn't exist.", %w(Try\ again Create\ account))
         choice == "Try again" ? sign_in : register
     end
 
@@ -58,7 +58,7 @@ class Session
         end
         email = get_email
         password = get_password("Create")
-        Person.create(name: name, email: email, password: password)
+        self.user = Person.create(name: name, email: email, password: password)
     end
 
     #Prompt the user for their email address
