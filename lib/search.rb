@@ -153,5 +153,4 @@ end
 
 search1 = Search.new("LOND-sky", "SFO-sky", "2020-01-10")
 search = Search.get_airport_from_city("London")
-binding.pry
 0
