@@ -1,0 +1,18 @@
+Person.create(name: "Steve Alex", email: "steve.alex@email.com", password: "password")
+Person.create(name: "Angus Morrison", email: "Angus Morrison@email.com", password: "password")
+Person.create(name: "Mike Wazowski", email: "mikewazowski@email.com", password: "password")
+Person.create(name: "Eddie Gordo ", email: "eddiegordo@email.com", password: "password")
+Person.create(name: "Wesley Snipes", email: "wesleysnipes@email.com", password: "password")
+Person.create(name: "Isaac Newton", email: "Isaac Newton@email.com", password: "password")
+
+Flight.create(origin: "LOND-sky", destination: "SFO-sky", departure_time: "2020-01-10T14:20:00", arrival_time: "2020-01-10T17:20:00")
+Flight.create(origin: "LOND-sky", destination: "SFO-sky", departure_time: "2020-01-10T11:40:00", arrival_time: "2020-01-10T14:45:00")
+Flight.create(origin: "LOND-sky", destination: "SFO-sky", departure_time: "2020-01-10T15:00:00", arrival_time: "2020-01-10T18:20:00")
+Flight.create(origin: "LOND-sky", destination: "SFO-sky", departure_time: "2020-01-10T10:25:00", arrival_time: "2020-01-10T13:35:00")
+Flight.create(origin: "LOND-sky", destination: "SFO-sky", departure_time: "2020-01-10T09:20:00", arrival_time: "2020-01-10T12:30:00")
+
+Booking.create(person_id: Person.all.sample.id, flight_id: Flight.all.sample.id, price: 199)
+Booking.create(person_id: Person.all.sample.id, flight_id: Flight.all.sample.id, price: 200)
+Booking.create(person_id: Person.all.sample.id, flight_id: Flight.all.sample.id, price: 201)
+Booking.create(person_id: Person.all.sample.id, flight_id: Flight.all.sample.id, price: 202)
+Booking.create(person_id: Person.all.sample.id, flight_id: Flight.all.sample.id, price: 500)
