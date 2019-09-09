@@ -95,6 +95,14 @@ class Search
     @search_results = Hash.from_xml(raw_results.body)
   end
 
+  def create_flights
+    all_flights = get_itineraries.each do | itin |
+      matching_leg = get_legs.find { | leg | leg["Id"] == itin["flight_id"] }
+      itin["departure_time"] = matching_leg["Departure"]
+      itin["arrival_time"] = matching_leg["Arrival"]
+    end
+  end
+
   #Extract itineraries from search results hash
   def get_itineraries
     itin_array = @search_results["PollSessionResponseDto"]["Itineraries"]["ItineraryApiDto"]
@@ -113,26 +121,15 @@ class Search
     end
   end
 
-
   #Return an array of legs that match an itinerary (departure time data)
   def get_legs
     @search_results["PollSessionResponseDto"]["Legs"]["ItineraryLegApiDto"]
   end 
 
-  #Combine pricing data with departure time data
-  def create_flights
-    all_flights = get_itineraries.each do | itin |
-      matching_leg = get_legs.find { | leg | leg["Id"] == itin["flight_id"] }
-      itin["departure_time"] = matching_leg["Departure"]
-      itin["arrival_time"] = matching_leg["Arrival"]
-    end
-  end
-
   #Takes in a list of flights and returns the cheapest flight for each arrival time
   def cheapest_unique_flights(flights)
     flights.uniq { | flight | flight["arrival_time"] }
   end
-
 
   ###### Class methods ######
 
