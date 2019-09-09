@@ -135,16 +135,23 @@ class Search
 
   #Return the first skyscanner airport code from a city name
   def self.get_airport_from_city(city)
+    response = Unirest.get "https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/autosuggest/v1.0/UK/GBP/en-GB/?query=#{city}",
+    headers:{
+      "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
+      "X-RapidAPI-Key" => "407d1ed52amsh672332be486dc02p1be71fjsn7639b4ef4b82"
+    }
+    places_hash = Hash.from_xml(response.body)
 
+    if !places_hash["AutoSuggestServiceResponseApiDto"]["Places"]
+      "This location has not been recognised, try another!"
+    else
+      places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"][0]["PlaceId"]
+    end
   end
-
-
-
-
 
 end
 
-search1 = Search.new("LHR-sky", "SFO-sky", "2020-01-10")
+search1 = Search.new("LOND-sky", "SFO-sky", "2020-01-10")
 search = Search.get_airport_from_city("London")
 binding.pry
 0
