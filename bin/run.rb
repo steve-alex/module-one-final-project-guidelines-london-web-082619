@@ -11,13 +11,12 @@ class Session
         @prompt = TTY::Prompt.new
     end
 
-
     ###### Instance methods ######
 
     #Welcome the user to Skyscourer
     def welcome
         puts
-        puts "🛫   Welcome to Skyscourer 🛬"
+        puts "🛫   Welcome to Skyscourer  🛬"
         puts "~~ the flight booking service similar to, but legally distinct from, Skyscanner ~~"
         puts
     end
@@ -39,14 +38,14 @@ class Session
         password = get_password("Enter")
         if Person.exists?(email: email, password: password)
             self.user = Person.where(email: email, password: password)
-        else  
+        else
             no_user
         end
     end
 
     #Handle sign-in requests where the user does not exist
     def no_user
-        choice = @prompt.select("That user doesn't exist.", %w(Try\ again Create\ account))
+        choice = @prompt.select("That user doesn't exist.", ["Try again", "Create account"])
         choice == "Try again" ? sign_in : register
     end
 
@@ -75,7 +74,7 @@ class Session
     def get_password(state)
         password = @prompt.mask("#{state} password (min. 8 characters):") do |q|
             q.required true
-            q.validate /^[^ ]{6,100}$/
+            q.validate /^[^ ]{8,100}$/
         end
     end
 
@@ -91,15 +90,6 @@ class Session
         process_main_menu_choice(choice)
     end
 
-    # def process_main_menu_choice(input)
-    #     case input
-    #     when "Search flights"
-    #     when "View booked flights"
-    #     when "Change a flight"
-    #     when "Cancel a flight"
-    #     end
-    # end
-
     def search_flights
         origin_code = get_airport_code("from")
         destination_code = get_airport_code("to")
@@ -111,7 +101,7 @@ class Session
     def get_airport_code(from_or_to)
         city = @prompt.ask("What city are you flying #{from_or_to}?") do |q|
             q.required true
-            q.validate /^[A-Za-z'\-&]{2,30}$/
+            q.validate /^[A-Za-z\-&]{2,30}$/
             q.modify :down
         end
 

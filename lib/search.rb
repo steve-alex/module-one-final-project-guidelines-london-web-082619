@@ -185,20 +185,30 @@ class Search
 
   #Return the first skyscanner airport code from a city name
   def self.get_airport_from_city(city)
-    response = Unirest.get("https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/autosuggest/v1.0/UK/GBP/en-GB/?query=#{city}",
-    headers:{
-      "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
-      "X-RapidAPI-Key" => "407d1ed52amsh672332be486dc02p1be71fjsn7639b4ef4b82"
-    })
-    places_hash = Hash.from_xml(response.body)
-
-    if !places_hash["AutoSuggestServiceResponseApiDto"]["Places"]
+  ##! Refactor
+    begin
+      response = Unirest.get("https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/autosuggest/v1.0/UK/GBP/en-GB/?query=#{city}",
+      headers:{
+        "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
+        "X-RapidAPI-Key" => "407d1ed52amsh672332be486dc02p1be71fjsn7639b4ef4b82"
+      })
+      places_hash = Hash.from_xml(response.body)
+      binding.pry
+      if !places_hash["AutoSuggestServiceResponseApiDto"]["Places"]
+        return nil
+      elsif places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"].is_a?(Array)
+        return places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"][0]["PlaceId"]
+      else
+        places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"]["PlaceId"]
+      end
+    rescue RuntimeError
       return nil
-    elsif places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"].is_a?(Array)
-      return places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"][0]["PlaceId"]
-    else
-      places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"]["PlaceId"]
     end
   end
 
 end
+
+puts Search.get_airport_from_city("London")
+
+#Call create_session until the response is valid
+#NEED TO CREATE TIMEOUT!!
