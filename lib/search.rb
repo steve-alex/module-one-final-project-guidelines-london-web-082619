@@ -70,6 +70,7 @@ class Search
 
   #Check that the POST method HTTPResponse header contains a valid :location
   def valid_response?(response)
+    ##! What other ways could we check a valid response?
     response.headers[:location]
   end
 
@@ -98,6 +99,7 @@ class Search
   def create_flights
     all_flights = get_itineraries.each do | itin |
       matching_leg = get_legs.find { | leg | leg["Id"] == itin["flight_id"] }
+      #needs to create m
       itin["departure_time"] = matching_leg["Departure"]
       itin["arrival_time"] = matching_leg["Arrival"]
     end
@@ -106,7 +108,6 @@ class Search
   #Extract itineraries from search results hash
   def get_itineraries
     itin_array = @search_results["PollSessionResponseDto"]["Itineraries"]["ItineraryApiDto"]
-
     itin_array.each_with_object([]) do | itin, array |
       flight = {}
       flight["flight_id"] = itin["OutboundLegId"]
@@ -124,7 +125,11 @@ class Search
   #Return an array of legs that match an itinerary (departure time data)
   def get_legs
     @search_results["PollSessionResponseDto"]["Legs"]["ItineraryLegApiDto"]
-  end 
+  end
+
+  def get_airports
+    @search_results["PollSessionResponseDto"]["Places"]["PlaceApiDto"]
+  end
 
   #Takes in a list of flights and returns the cheapest flight for each arrival time
   def cheapest_unique_flights(flights)
@@ -153,5 +158,5 @@ end
 
 search1 = Search.new("LOND-sky", "SFO-sky", "2020-01-10")
 puts search1.run_search
-search = Search.get_airport_from_city("London")
+puts search = Search.get_airport_from_city("London")
 0
