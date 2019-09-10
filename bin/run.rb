@@ -38,7 +38,6 @@ class Session
         password = get_password("Enter")
         if Person.exists?(email: email, password: password)
             self.user = Person.find_by(email: email, password: password)
-            binding.pry
         else  
             no_user
         end
@@ -121,7 +120,6 @@ class Session
             flight_id: flight.id,
             price: results[flight_choice]["price"]
         )
-        binding.pry
     end
 
     #Takes a city name from the user and returns the airport code
@@ -223,7 +221,6 @@ session = Session.new
 session.welcome
 session.sign_in_prompt
 session.main_menu
-
 
 
 
