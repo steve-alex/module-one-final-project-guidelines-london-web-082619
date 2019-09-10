@@ -163,10 +163,8 @@ class Session
 end
 
 session = Session.new
-#p session.search_flights
-search = Search.new(origin: "LOND-sky", destination: "DEL-sky", outbound_date: "2020-05-07")
+p session.search_flights
 
-p search.run_search
 # session.welcome
 # session.sign_in_prompt
 # session.main_menu
