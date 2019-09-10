@@ -159,15 +159,32 @@ class Session
     end
 
 
+    ##########################
+    ###### View flights ######
+    ##########################
+    # def view_booked_flights
+    #     flight_list = []
+    #     Person.bookings.map do | booking |
+    #         flight_list[:price] = booking.price
+    #     end
+    #     Person.flights.map do | flight |
+
+    # def booking_to_string(booking)
+    #     Person.bookings.each_with_object([]) do | booking |
+    #         booking_string = <<-BOOKING
+    #             #{booking.flight.origin.capitalize} 
+    #             #{booking.flight.origin_code} 
+
 
 end
 
 session = Session.new
-p session.search_flights
-
 # session.welcome
 # session.sign_in_prompt
 # session.main_menu
+search1 = Search.new(origin: "LOND-sky", destination: "SFO-sky", outbound_date: "2020-01-20")
+p search1.run_search
+
 
 
 

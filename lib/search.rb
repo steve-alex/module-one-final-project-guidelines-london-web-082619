@@ -94,6 +94,7 @@ class Search
 
     #Generate search_results hash from XML response
     @search_results = Hash.from_xml(raw_results.body)
+    binding.pry
   end
 
   def create_flights
@@ -106,7 +107,6 @@ class Search
 
   #Extract itineraries from search results hash
   def get_itineraries
-    binding.pry
     itin_array = @search_results["PollSessionResponseDto"]["Itineraries"]["ItineraryApiDto"]
 
     itin_array.each_with_object([]) do | itin, array |
