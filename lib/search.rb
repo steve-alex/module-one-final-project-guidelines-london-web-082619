@@ -151,7 +151,5 @@ class Search
 
 end
 
-search1 = Search.new("LOND-sky", "SFO-sky", "2020-01-10")
-puts search1.run_search
-search = Search.get_airport_from_city("London")
-0
+search = Search.new("LOND-sky", "SFO-sky", "2019-6-6")
+p search.run_search
