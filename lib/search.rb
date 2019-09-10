@@ -11,7 +11,6 @@ class Search
   @@max_results = 5
 
   ###### Instance methods ######
-
   def initialize(origin, destination, outbound_date, inbound_date="")
     @origin = origin
     @destination = destination
@@ -28,6 +27,7 @@ class Search
     session_key = get_key(session)
     get_search_results(session_key)
     return "Search timed out. Please try again." if !@search_results
+    return "No flights found" if !itineraries_valid?
     flights = cheapest_unique_flights(create_flights)
     #Limit the number of results returned
     flights.length > @@max_results ? flights.slice(0...@@max_results) : flights
@@ -94,21 +94,20 @@ class Search
 
     #Generate search_results hash from XML response
     @search_results = Hash.from_xml(raw_results.body)
+    binding.pry
   end
 
   def create_flights
-    all_flights = get_itineraries.each do | itin |
-      matching_leg = get_legs.find { | leg | leg["Id"] == itin["flight_id"] }
-      #needs to create m
-      itin["departure_time"] = matching_leg["Departure"]
-      itin["arrival_time"] = matching_leg["Arrival"]
-    end
+    #Creates an array of all the flights that are queried by the API
+    flights = create_itineraries
+    add_departure_and_arrival_time(flights)
+    add_departure_and_arrival_airport(flights)
+    flights
   end
 
-  #Extract itineraries from search results hash
-  def get_itineraries
-    itin_array = @search_results["PollSessionResponseDto"]["Itineraries"]["ItineraryApiDto"]
-    itin_array.each_with_object([]) do | itin, array |
+  def create_itineraries
+    #Creates a flight object hash for each flight queried by the API, then associates a flight_id and price with that flight object
+    get_itineraries.each_with_object([]) do | itin, array |
       flight = {}
       flight["flight_id"] = itin["OutboundLegId"]
 
@@ -122,6 +121,50 @@ class Search
     end
   end
 
+  def add_departure_and_arrival_time(flights)
+    #Gives each flight object an associated departure and arrival time.
+    #Gets the associated leg using the get_legs method and accesses the the times from here
+    flights.each do |flight|
+      matching_leg = get_legs.find { | leg | leg["Id"] == flight["flight_id"] }
+      flight["departure_time"] = matching_leg["Departure"]
+      flight["arrival_time"] = matching_leg["Arrival"]
+    end
+  end
+
+  def add_departure_and_arrival_airport(flights)
+    #Adds in the departure and arrival airport codes and names
+    #Gets the associated leg using the get_legs method and accesses the origin and destination airports unique code
+    #It then calls the find_airport_object that finds the information about a specific airport using its unique code
+    #Adds the code and destination of origin and desitination airport by accessing this information
+    flights.each do |flight|
+      matching_leg = get_legs.find { | leg | leg["Id"] == flight["flight_id"] }
+      origin_airport = find_airport_object(matching_leg["OriginStation"])
+      destination_airport = find_airport_object(matching_leg["DestinationStation"])
+      flight["origin_code"] = origin_airport["Code"]
+      flight["destination_code"] = destination_airport["Code"]
+      flight["origin_name"] = origin_airport["Name"]
+      flight["destination_name"] = destination_airport["Name"]
+    end
+  end
+
+  def find_airport_object(airport_code)
+    #Returns the information about an airport using it's airport code
+    get_airports.each do |airport|
+      if airport["Id"] == airport_code
+        return airport
+      end
+    end
+  end
+
+  #Extract itineraries from search results hash
+  def itineraries_valid?
+    @search_results["PollSessionResponseDto"]["Itineraries"]
+  end
+
+  def get_itineraries
+    @search_results["PollSessionResponseDto"]["Itineraries"]["ItineraryApiDto"]
+  end
+  
   #Return an array of legs that match an itinerary (departure time data)
   def get_legs
     @search_results["PollSessionResponseDto"]["Legs"]["ItineraryLegApiDto"]
@@ -155,8 +198,3 @@ class Search
   end
 
 end
-
-search1 = Search.new("LOND-sky", "SFO-sky", "2020-01-10")
-puts search1.run_search
-puts search = Search.get_airport_from_city("London")
-0
