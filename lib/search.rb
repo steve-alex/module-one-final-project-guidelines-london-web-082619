@@ -95,7 +95,6 @@ class Search
 
     #Generate search_results hash from XML response
     @search_results = Hash.from_xml(raw_results.body)
-    binding.pry
   end
 
   def create_flights
@@ -158,13 +157,4 @@ class Search
     end
   end
 
-<<<<<<< HEAD
 end
-
-search1 = Search.new("LOND-sky", "SFO-sky", "2020-01-10")
-puts search1.run_search
-puts search = Search.get_airport_from_city("London")
-0
-=======
-end
->>>>>>> 322fabb36a051f1b957ef53a33d0ee86aa86d110
