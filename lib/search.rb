@@ -18,18 +18,30 @@ class Search
     @outbound_date = outbound_date
     @inbound_date = inbound_date
     @search_results = nil
-    Unirest.timeout(30)
   end
 
   #Run the search and return an array of unique flight hashes
   def run_search
-    session = create_session
-    #binding.pry
-    return "Search timed out. Please try again." if !session
+    session = nil
+    begin
+      Timeout::timeout(10) do
+        session = create_session
+      end
+    rescue Timeout::Error
+      return nil
+    end
+
     session_key = get_key(session)
-    get_search_results(session_key)
-    return "Search timed out. Please try again." if !@search_results
-    return "No flights found" if !itineraries_valid?
+
+    begin
+      Timeout::timeout(10) do
+        get_search_results(session_key)
+      end
+    rescue Timeout::Error
+      return nil
+    end
+
+    return nil if !itineraries_valid?
     flights = cheapest_unique_flights(create_flights)
     #Limit the number of results returned
     flights.length > @@max_results ? flights.slice(0...@@max_results) : flights
@@ -40,7 +52,6 @@ class Search
 
   #POST method: create a Skyscanner session with search parameters
   def create_session()
-    begin
       response = Unirest.post(
         "https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/pricing/v1.0",
         headers:{
@@ -62,17 +73,12 @@ class Search
           "adults" => 1
         }
       )
-    rescue RuntimeError
-      return nil
-    end
-    #Call create_session until the response is valid
-    #NEED TO CREATE TIMEOUT!!
+    #Call create_session until the response is valid or the function times out
     valid_response?(response) ? response : create_session()
   end
 
   #Check that the POST method HTTPResponse header contains a valid :location
   def valid_response?(response)
-    ##! What other ways could we check a valid response?
     response.headers[:location]
   end
 
@@ -84,19 +90,14 @@ class Search
 
   #Poll the session results and save them to the search_results instance variable
   def get_search_results(session_key)
-    begin
       raw_results = Unirest.get("https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/pricing/uk2/v1.0/#{session_key}?sortType=price&sortOrder=asc&stops=0&pageIndex=0&pageSize=10",
       headers:{
         "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
         "X-RapidAPI-Key" => "c036ae2334msh6e52f9287ee7e7ap1fbff8jsnb8c6fa5b89b5"
       })
-    rescue RuntimeError
-      return nil
-    end
 
     #Generate search_results hash from XML response
     @search_results = Hash.from_xml(raw_results.body)
-    binding.pry
   end
 
   def create_flights

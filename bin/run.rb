@@ -37,8 +37,9 @@ class Session
         email = get_email
         password = get_password("Enter")
         if Person.exists?(email: email, password: password)
-            self.user = Person.where(email: email, password: password)
-        else
+            self.user = Person.find_by(email: email, password: password)
+            binding.pry
+        else  
             no_user
         end
     end
@@ -80,8 +81,7 @@ class Session
 
     #List a signed-in user's options
     def main_menu
-        puts "Welcome, #{self.user.name}!"
-        choice = @prompt.select("What would you like to do?") do | menu |
+        choice = @prompt.select("What would you like to do, #{self.user.name}?") do | menu |
             menu.choice("Search flights")
             menu.choice("View booked flights")
             menu.choice("Change a flight")
@@ -90,11 +90,38 @@ class Session
         process_main_menu_choice(choice)
     end
 
+    def process_main_menu_choice(input)
+        case input
+        when "Search flights"
+            search_flights
+    #     when "View booked flights"
+    #     when "Change a flight"
+    #     when "Cancel a flight"
+        end
+    end
+
     def search_flights
         origin_code = get_airport_code("from")
         destination_code = get_airport_code("to")
         outbound_date = format_date(get_date("departing"))
         results = Search.new(origin: origin_code, destination: destination_code, outbound_date: outbound_date).run_search
+        valid_results?(results)
+        formatted_results = format_results(results)
+        flight_choice = choose_flight(formatted_results)
+        flight = Flight.find_or_create_by(
+            origin: results[flight_choice]["origin_name"],
+            destination: results[flight_choice]["destination_name"],
+            origin_code: results[flight_choice]["origin_code"],
+            destination_code: results[flight_choice]["destination_code"],
+            departure_time: results[flight_choice]["departure_time"],
+            arrival_time: results[flight_choice]["arrival_time"]
+        )
+        booking = Booking.create(
+            person_id: self.user.id,
+            flight_id: flight.id,
+            price: results[flight_choice]["price"]
+        )
+        binding.pry
     end
 
     #Takes a city name from the user and returns the airport code
@@ -148,6 +175,30 @@ class Session
         new_date = [date_chunks[2], date_chunks[1], date_chunks[0]].join("-")
     end
 
+    #Validates the search results set
+    def valid_results?(results)
+        if !results
+            puts "No flights found. Please try an alternative route."
+            main_menu
+        end
+    end
+
+    #Prompt the user to book a flight returned by their search
+    def choose_flight(formatted_results)
+        choice = @prompt.select("Choose a flight to book") do | menu |
+            formatted_results.each_with_index do | result, index |
+                menu.choice(result, index)
+            end
+        end
+    end
+
+    #Format the raw search results
+    def format_results(results)
+        results.map do | flight |
+            "✈️ #{flight['origin_name']} #{flight['origin_code']} ⏱#{flight['departure_time']} → #{flight['destination_name']} #{flight['destination_code']} ⏱#{flight['arrival_time']} 💷#{flight['price']}"
+        end
+    end
+
 
     ##########################
     ###### View flights ######
@@ -169,11 +220,9 @@ class Session
 end
 
 session = Session.new
-# session.welcome
-# session.sign_in_prompt
-# session.main_menu
-search1 = Search.new(origin: "LOND-sky", destination: "SFO-sky", outbound_date: "2020-01-20")
-p search1.run_search
+session.welcome
+session.sign_in_prompt
+session.main_menu
 
 
 
