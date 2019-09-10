@@ -100,11 +100,12 @@ class Session
     #     end
     # end
 
-    # def search_flights
-    #     origin_code = Search.get_airport_from_city(get_airport_code("from")
-    #     destination_code = Search.get_airport_from_city(get_airport_code("to")
-    #     depature = format_date(get_date("departing"))
-    # end
+    def search_flights
+        origin_code = get_airport_code("from")
+        destination_code = get_airport_code("to")
+        outbound_date = format_date(get_date("departing"))
+        results = Search.new(origin: origin_code, destination: destination_code, outbound_date: outbound_date).run_search
+    end
 
     #Takes a city name from the user and returns the airport code
     def get_airport_code(from_or_to)
@@ -162,7 +163,10 @@ class Session
 end
 
 session = Session.new
-p session.get_airport_code("from")
+#p session.search_flights
+search = Search.new(origin: "LOND-sky", destination: "DEL-sky", outbound_date: "2020-05-07")
+
+p search.run_search
 # session.welcome
 # session.sign_in_prompt
 # session.main_menu
