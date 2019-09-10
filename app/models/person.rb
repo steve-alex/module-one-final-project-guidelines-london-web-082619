@@ -1,6 +1,6 @@
 class Person < ActiveRecord::Base
     has_many :bookings
-    has_many :people, through: :bookings
+    has_many :flights, through: :bookings
 
     def book_flight(origin:, destination:, arrival_time:, departure_time:, price:)
         if Flight.exists?(origin: origin, destination: destination, departure_time: departure_time, arrival_time: arrival_time)

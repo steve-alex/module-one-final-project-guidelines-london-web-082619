@@ -22,6 +22,7 @@ class Search
 
   #Run the search and return an array of unique flight hashes
   def run_search
+    session = nil
     begin
       Timeout::timeout(10) do
         session = create_session
