@@ -143,13 +143,10 @@ class Search
     places_hash = Hash.from_xml(response.body)
 
     if !places_hash["AutoSuggestServiceResponseApiDto"]["Places"]
-      "This location has not been recognised, try another!"
+      return nil
     else
       places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"][0]["PlaceId"]
     end
   end
 
 end
-
-search = Search.new("LOND-sky", "SFO-sky", "2019-6-6")
-p search.run_search

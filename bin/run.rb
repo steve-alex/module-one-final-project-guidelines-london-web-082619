@@ -103,25 +103,42 @@ class Session
     # def search_flights
     #     origin_code = Search.get_airport_from_city(get_airport_code("from")
     #     destination_code = Search.get_airport_from_city(get_airport_code("to")
-    #     #get departure date
+    #     depature = format_date(get_date("departing"))
     # end
 
-    # def get_airport_code(from_or_to)
-    #     @prompt.ask("What city are you flying #{from_or_to}?") do |q|
-    #         q.required true
-    #         q.validate /^[A-Za-z'\-&]{2,30}$/
-    #         q.modify :down
-    #     end
-    # end
+    #Takes a city name from the user and returns the airport code
+    def get_airport_code(from_or_to)
+        city = @prompt.ask("What city are you flying #{from_or_to}?") do |q|
+            q.required true
+            q.validate /^[A-Za-z'\-&]{2,30}$/
+            q.modify :down
+        end
 
+        code = Search.get_airport_from_city(city)
+        valid_airport?(code) ? code : get_airport_code(from_or_to)
+    end
+
+    #Checks that the code returned is valid
+    def valid_airport?(code)
+        if code
+            return true
+        else
+            puts
+            puts "That city doesn't have an airport. Please try again."
+            return false
+        end
+    end
+
+    #Takes a string ("departing" or "returning") and gets departure or return date from user
     def get_date(departing_or_returning)
         date = @prompt.ask("What date are you #{departing_or_returning}? DD-MM-YYYY") do |q|
             q.required true
-            q.validate /^(?:(?:31(\/|-|\.)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-|\.)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-|\.)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})$/
+            q.validate /(^(((0[1-9]|1[0-9]|2[0-8])[\/\-](0[1-9]|1[012]))|((29|30|31)[\/\-](0[13578]|1[02]))|((29|30)[\/\-](0[4,6,9]|11)))[\/\-](19|[2-9][0-9])\d\d$)|(^29[\/\-]02[\/\-](19|[2-9][0-9])(00|04|08|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96)$)/
         end
         valid_date?(date) ? date : get_date(departing_or_returning)
     end
 
+    #Checks user's date is valid
     def valid_date?(date)
         datetime = DateTime.strptime(date, "%d-%m-%Y")
         if datetime > DateTime.now.next_year 
@@ -134,12 +151,18 @@ class Session
         true
     end
 
+    #Formats date for input into the Skyscanner API
+    def format_date(date)
+        date_chunks = date.split(/[\-\/\.]/)
+        new_date = [date_chunks[2], date_chunks[1], date_chunks[0]].join("-")
+    end
+
 
 
 end
 
 session = Session.new
-p session.get_date("departing")
+p session.get_airport_code("from")
 # session.welcome
 # session.sign_in_prompt
 # session.main_menu
