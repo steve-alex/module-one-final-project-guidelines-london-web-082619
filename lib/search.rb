@@ -12,10 +12,11 @@ class Search
 
   ###### Instance methods ######
 
-  def initialize(origin, destination, outbound_date, inbound_date="")
+  def initialize(origin:, destination:, outbound_date:, inbound_date: "")
     @origin = origin
     @destination = destination
     @outbound_date = outbound_date
+    @inbound_date = inbound_date
     @search_results = nil
     Unirest.timeout(30)
   end
@@ -94,6 +95,7 @@ class Search
 
     #Generate search_results hash from XML response
     @search_results = Hash.from_xml(raw_results.body)
+    binding.pry
   end
 
   def create_flights
@@ -140,23 +142,29 @@ class Search
 
   #Return the first skyscanner airport code from a city name
   def self.get_airport_from_city(city)
-    response = Unirest.get "https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/autosuggest/v1.0/UK/GBP/en-GB/?query=#{city}",
+    response = Unirest.get("https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/autosuggest/v1.0/UK/GBP/en-GB/?query=#{city}",
     headers:{
       "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
       "X-RapidAPI-Key" => "407d1ed52amsh672332be486dc02p1be71fjsn7639b4ef4b82"
-    }
+    })
     places_hash = Hash.from_xml(response.body)
 
     if !places_hash["AutoSuggestServiceResponseApiDto"]["Places"]
-      "This location has not been recognised, try another!"
+      return nil
+    elsif places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"].is_a?(Array)
+      return places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"][0]["PlaceId"]
     else
-      places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"][0]["PlaceId"]
+      places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"]["PlaceId"]
     end
   end
 
+<<<<<<< HEAD
 end
 
 search1 = Search.new("LOND-sky", "SFO-sky", "2020-01-10")
 puts search1.run_search
 puts search = Search.get_airport_from_city("London")
 0
+=======
+end
+>>>>>>> 322fabb36a051f1b957ef53a33d0ee86aa86d110
