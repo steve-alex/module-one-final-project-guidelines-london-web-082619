@@ -26,16 +26,21 @@ class Session
 
     #Prompt the user to sign in
     def sign_in_prompt
-        user_type = @prompt.select("To start, sign in or create an account:", ["Sign in", "Register"])
-        if user_type == "Sign in"
+        puts
+        choice = @prompt.select("To start, sign in or create an account:", ["Sign in", "Register", "Quit"])
+        case choice
+        when "Sign in"
             sign_in
-        elsif user_type == "Register"
+        when "Register"
             register
+        when "Quit"
+            process_main_menu_choice("Log out")
         end
     end
 
     #Get and validate sign-in details
     def sign_in
+        puts
         puts "Sign in with your email and password.\n"
         email = get_email
         password = get_password("Enter")
@@ -48,8 +53,16 @@ class Session
 
     #Handle sign-in requests where the user does not exist
     def no_user
-        choice = @prompt.select("That user doesn't exist.", ["Try again", "Create account"])
-        choice == "Try again" ? sign_in : register
+        puts
+        choice = @prompt.select("That user doesn't exist.", ["Try again", "Register", "Quit"])
+        case choice
+        when "Try again"
+            sign_in
+        when "Register"
+            register
+        when "Quit"
+            process_main_menu_choice("Log out")
+        end
     end
 
     #Register a new user
@@ -88,15 +101,18 @@ class Session
 
     #List a signed-in user's options
     def main_menu
+        puts
         choice = @prompt.select("What would you like to do, #{self.user.name}?") do | menu |
             menu.choice("Search and book flights")
             menu.choice("View booked flights")
             menu.choice("Cancel a flight")
             menu.choice("Change password")
+            menu.choice("Log out")
         end
         process_main_menu_choice(choice)
     end
 
+    #Process the user's decision on the main menu. Handles all quit/logout commands
     def process_main_menu_choice(input)
         case input
         when "Search and book flights"
@@ -107,6 +123,11 @@ class Session
             cancel_a_flight
         when "Change password"
             change_password
+        when "Log out"
+            puts
+            puts "Thanks for shopping with Skyscourer!"
+            puts
+            exit
         end
     end
 
@@ -221,7 +242,10 @@ class Session
             formatted_results.each_with_index do | result, index |
                 menu.choice(result, index)
             end
+            menu.choice("◀️ Back")
         end
+        main_menu if choice == "◀️ Back"
+        choice
     end
 
     #Format the raw search results
@@ -236,13 +260,45 @@ class Session
     ###### View flights ######
     ##########################
 
+    #Show the user the flights they've booked
     def view_booked_flights
+        puts
+        puts  "Here are your flights: "
         puts get_booked_flights
+        puts
+        input = @prompt.select("Finished?", ["◀️ Main menu", "❌ Log out"])
+        process_view_flights_choice(input)    
     end
 
+    #Fetch and format the user's flights array
     def get_booked_flights
-        format_results(self.user.flights)
+        results = self.user.flights.each_with_object([]) do | flight, array |
+            matching_booking = self.user.bookings.find { | booking | booking.flight_id == flight.id }
+            array << {
+                        "origin_name" => flight.origin,
+                        "origin_code" => flight.origin_code,
+                        "destination_name" => flight.destination,
+                        "destination_code" => flight.destination_code,
+                        "departure_time" => flight.departure_time,
+                        "arrival_time" => flight.arrival_time,
+                        "price" => matching_booking.price
+                     }
+        end
+        binding.pry
+        format_results(results)
     end
+
+    #Process the user's decision after viewing their flights
+    def process_view_flights_choice(input)
+        case input
+        when "◀️ Main menu"
+            main_menu
+        when "❌ Log out"
+            process_main_menu_choice("Log out")
+        end
+    end
+
+
 
     ##########################
     ###### Cancel flights ######
