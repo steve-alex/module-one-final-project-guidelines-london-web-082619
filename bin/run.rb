@@ -5,18 +5,13 @@ require 'pry'
 require_relative '../config/environment'
 
 class Session
-    attr_accessor :user
 
     def initialize
         @user = nil
         @prompt = TTY::Prompt.new
     end
 
-
-    #####################
-    ###### Welcome ######
-    #####################
-
+    
     #Run the session
     def run_session
         welcome
@@ -24,6 +19,11 @@ class Session
         main_menu
     end
 
+    private
+
+    #####################
+    ###### Welcome ######
+    #####################
 
     #Welcome the user to Skyscourer
     def welcome
@@ -63,7 +63,7 @@ class Session
         email = get_email
         password = get_password("Enter")
         if Person.exists?(email: email, password: password)
-            self.user = Person.find_by(email: email, password: password)
+            @user = Person.find_by(email: email, password: password)
         else  
             no_user
         end
@@ -94,7 +94,7 @@ class Session
         end
         email = get_email
         password = get_password("Create")
-        self.user = Person.create(name: name, email: email, password: password)
+        @user = Person.create(name: name, email: email, password: password)
     end
 
     #Prompt the user for their email address
@@ -124,7 +124,7 @@ class Session
     #List a signed-in user's options
     def main_menu
         puts
-        choice = @prompt.select("What would you like to do, #{self.user.name}?") do | menu |
+        choice = @prompt.select("What would you like to do, #{@user.name}?") do | menu |
             menu.choice("Search and book flights")
             menu.choice("View booked flights")
             menu.choice("Cancel a booking")
@@ -206,7 +206,7 @@ class Session
             flight_hash.filter { | k, v | k != "price" && k != "flight_id" }
         )
         booking = Booking.create(
-            person_id: self.user.id,
+            person_id: @user.id,
             flight_id: flight.id,
             price: flight_hash["price"]
         )
@@ -295,7 +295,7 @@ class Session
     #Show the user the flights they've booked
     def view_booked_flights
         puts
-        if self.user.bookings.reload[0]
+        if @user.bookings.reload[0]
             puts "Here are your bookings:"
             puts get_booked_flights
         else
@@ -308,8 +308,8 @@ class Session
 
     #Fetch and format the user's flights array (uses reload to refresh cached values)
     def get_booked_flights
-        results = self.user.flights.reload.each_with_object([]) do | flight, array |
-            matching_booking = self.user.bookings.find { | booking | booking.flight_id == flight.id }
+        results = @user.flights.reload.each_with_object([]) do | flight, array |
+            matching_booking = @user.bookings.find { | booking | booking.flight_id == flight.id }
             booking_details = flight.attributes.reject { | k, v | k == "id" }
             booking_details["price"] = matching_booking.price
             array << booking_details
@@ -335,11 +335,9 @@ class Session
     
     def cancel_booking
         puts
-        if self.user.bookings.reload[0]
+        if @user.bookings.reload[0]
             choice = @prompt.select("Choose a booking to cancel") do | menu |
-                get_booked_flights.each_with_index do | result, index |
-                    menu.choice(result, index)
-                end
+                get_booked_flights.each_with_index { | result, index | menu.choice(result, index) }
                 menu.choice("◀️  Back")
             end
             process_cancellation(choice)
@@ -351,7 +349,7 @@ class Session
 
     def process_cancellation(choice)
         main_menu if choice == "◀️  Back"
-        booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
+        booking_id = @user.bookings.find_by(flight: @user.flights[choice]).id
         Booking.destroy(booking_id)
         puts
         puts "Success! Booking cancelled."
@@ -365,7 +363,7 @@ class Session
     #Run the change password flow
     def change_password
         verify_password
-        self.user.update(password: get_password("Create new"))
+        @user.update(password: get_password("Create new"))
         puts "Success! Password updated."
         puts
         main_menu
@@ -379,7 +377,7 @@ class Session
             q.validate /^.*{,100}$/
             q.messages[:valid?] = "Password is too long"
         end
-        if old_password != self.user.password
+        if old_password != @user.password
             puts
             puts "Incorrect password. Please try again."
             verify_password
