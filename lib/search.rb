@@ -19,9 +19,9 @@ class Search
     @inbound_date = inbound_date
     @search_results = nil
   end
-
-  #Run the search and return an array of unique flight hashes
+  
   def run_search
+    #Run the search and return an array of unique flight hashes
     session = nil
     begin
       Timeout::timeout(10) do
@@ -34,14 +34,14 @@ class Search
     session_key = get_key(session)
 
     begin
-      Timeout::timeout(10) do
+      Timeout::timeout(30) do
         get_search_results(session_key)
       end
     rescue Timeout::Error
       return nil
     end
 
-    return nil if !itineraries_valid?
+    return nil if !search_results_valid?
     flights = cheapest_unique_flights(create_flights)
     #Limit the number of results returned
     flights.length > @@max_results ? flights.slice(0...@@max_results) : flights
@@ -50,55 +50,56 @@ class Search
 
   private
 
-  #POST method: create a Skyscanner session with search parameters
   def create_session()
-      response = Unirest.post(
-        "https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/pricing/v1.0",
-        headers:{
-          "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
-          "X-RapidAPI-Key" => "c036ae2334msh6e52f9287ee7e7ap1fbff8jsnb8c6fa5b89b5",
-          "Content-Type" => "application/x-www-form-urlencoded"
-        },
-        parameters:{
-          "inboundDate" => self.inbound_date,
-          "cabinClass" => "economy",
-          "children" => 0,
-          "infants" => 0,
-          "country" => "UK",
-          "currency" => "GBP",
-          "locale" => "en-US",
-          "originPlace" => self.origin_code,
-          "destinationPlace" => self.destination_code,
-          "outboundDate" => self.outbound_date,
-          "adults" => 1
-        }
-      )
-    #Call create_session until the response is valid or the function times out
-    valid_response?(response) ? response : create_session()
+    #POST method: create a Skyscanner session with search parameters
+    response = Unirest.post(
+      "https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/pricing/v1.0",
+      headers:{
+        "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
+        "X-RapidAPI-Key" => "c036ae2334msh6e52f9287ee7e7ap1fbff8jsnb8c6fa5b89b5",
+        "Content-Type" => "application/x-www-form-urlencoded"
+      },
+      parameters:{
+        "inboundDate" => self.inbound_date,
+        "cabinClass" => "economy",
+        "children" => 0,
+        "infants" => 0,
+        "country" => "UK",
+        "currency" => "GBP",
+        "locale" => "en-US",
+        "originPlace" => self.origin_code,
+        "destinationPlace" => self.destination_code,
+        "outboundDate" => self.outbound_date,
+        "adults" => 1
+      }
+    )
+
+    response.code == 201 ? response : create_session()
   end
 
-  #Check that the POST method HTTPResponse header contains a valid :location
-  def valid_response?(response)
-    response.headers[:location]
-  end
-
-  #Extract the session key (string) from the raw POST response
   def get_key(session)
+    #Extract the session key (string) from the raw POST response
     session_url = session.headers[:location]
     session_url.split("/").last
   end
 
-  #Poll the session results and save them to the search_results instance variable
   def get_search_results(session_key)
-      raw_results = Unirest.get("https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/pricing/uk2/v1.0/#{session_key}?sortType=price&sortOrder=asc&stops=0&pageIndex=0&pageSize=10",
-      headers:{
-        "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
-        "X-RapidAPI-Key" => "c036ae2334msh6e52f9287ee7e7ap1fbff8jsnb8c6fa5b89b5"
-      })
+    #Poll the session results and save them to the search_results instance variable
+    raw_results = Unirest.get("https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/pricing/uk2/v1.0/#{session_key}?sortType=price&sortOrder=asc&stops=0&pageIndex=0&pageSize=10",
+    headers:{
+      "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
+      "X-RapidAPI-Key" => "c036ae2334msh6e52f9287ee7e7ap1fbff8jsnb8c6fa5b89b5"
+    })
 
     #Generate search_results hash from XML response
     @search_results = Hash.from_xml(raw_results.body)
+    get_search_results(session_key) if @search_results["PollSessionResponseDto"]["Status"] != "UpdatesComplete"
   end
+
+  def search_results_valid?
+    get_itineraries && get_airports && get_legs
+  end
+
 
   def create_flights
     #Creates an array of all the flights that are queried by the API
@@ -159,10 +160,10 @@ class Search
     end
   end
 
-  #Extract itineraries from search results hash
-  def itineraries_valid?
-    @search_results["PollSessionResponseDto"]["Itineraries"]
-  end
+  # #Extract itineraries from search results hash
+  # def itineraries_valid?
+  #   @search_results["PollSessionResponseDto"]["Itineraries"]
+  # end
 
   def get_itineraries
     @search_results["PollSessionResponseDto"]["Itineraries"]["ItineraryApiDto"]
