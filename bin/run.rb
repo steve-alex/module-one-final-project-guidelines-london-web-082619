@@ -218,12 +218,3 @@ class Session
 
 
 end
-
-session = Session.new
-session.welcome
-session.sign_in_prompt
-session.main_menu
-
-
-
-
