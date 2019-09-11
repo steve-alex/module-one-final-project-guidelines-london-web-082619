@@ -101,8 +101,10 @@ class Session
         case input
         when "Search and book flights"
             search_and_book_flights
-    #     when "View booked flights"
-    #     when "Cancel a flight"
+        when "View booked flights"
+            view_booked_flights    
+        when "Cancel a flight"
+            cancel_a_flight
         when "Change password"
             change_password
         end
@@ -233,19 +235,28 @@ class Session
     ##########################
     ###### View flights ######
     ##########################
-    # def view_booked_flights
-    #     flight_list = []
-    #     Person.bookings.map do | booking |
-    #         flight_list[:price] = booking.price
-    #     end
-    #     Person.flights.map do | flight |
 
-    # def booking_to_string(booking)
-    #     Person.bookings.each_with_object([]) do | booking |
-    #         booking_string = <<-BOOKING
-    #             #{booking.flight.origin.capitalize} 
-    #             #{booking.flight.origin_code} 
+    def view_booked_flights
+        puts get_booked_flights
+    end
 
+    def get_booked_flights
+        format_results(self.user.flights)
+    end
+
+    ##########################
+    ###### Cancel flights ######
+    ##########################
+    
+    def cancel_a_flight
+        choice = @prompt.select("Choose a flight to cancel") do | menu |
+            get_booked_flights.each_with_index do | result, index |
+                menu.choice(result, index)
+            end
+        end
+        booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
+        Booking.destroy(booking_id)
+    end
 
     #############################
     ###### Change password ######
@@ -285,6 +296,3 @@ session = Session.new
 session.welcome
 session.sign_in_prompt
 session.main_menu
-
-
-
