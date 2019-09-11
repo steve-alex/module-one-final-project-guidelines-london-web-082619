@@ -105,7 +105,7 @@ class Session
         choice = @prompt.select("What would you like to do, #{self.user.name}?") do | menu |
             menu.choice("Search and book flights")
             menu.choice("View booked flights")
-            menu.choice("Cancel a flight")
+            menu.choice("Cancel a booking")
             menu.choice("Change password")
             menu.choice("Log out")
         end
@@ -119,8 +119,8 @@ class Session
             search_and_book_flights
         when "View booked flights"
             view_booked_flights    
-        when "Cancel a flight"
-            cancel_a_flight
+        when "Cancel a booking"
+            cancel_booking
         when "Change password"
             change_password
         when "Log out"
@@ -284,7 +284,6 @@ class Session
                         "price" => matching_booking.price
                      }
         end
-        binding.pry
         format_results(results)
     end
 
@@ -304,14 +303,17 @@ class Session
     ###### Cancel flights ######
     ##########################
     
-    def cancel_a_flight
-        choice = @prompt.select("Choose a flight to cancel") do | menu |
+    def cancel_booking
+        choice = @prompt.select("Choose a booking to cancel") do | menu |
             get_booked_flights.each_with_index do | result, index |
                 menu.choice(result, index)
             end
         end
         booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
         Booking.destroy(booking_id)
+        puts
+        puts "Success! Booking cancelled."
+        main_menu
     end
 
     #############################
