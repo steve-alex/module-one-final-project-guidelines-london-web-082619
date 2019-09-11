@@ -74,12 +74,7 @@ class Search
       }
     )
 
-    valid_response?(response) ? response : create_session()
-  end
-
-  def valid_response?(response)
-    #Check the response is valid
-    response.code == 201
+    response.code == 201 ? response : create_session()
   end
 
   def get_key(session)
