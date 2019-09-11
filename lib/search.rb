@@ -85,7 +85,7 @@ class Search
 
   def get_search_results(session_key)
     #Poll the session results and save them to the search_results instance variable
-    raw_results = Unirest.get("https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/pricing/uk2/v1.0/#{session_key}?sortType=price&sortOrder=asc&stops=0&pageIndex=0&pageSize=10",
+    raw_results = Unirest.get("https://skyscanner-skyscanner-flight-search-v1.p.rapidapi.com/apiservices/pricing/uk2/v1.0/#{session_key}?sortType=price&sortOrder=asc&pageIndex=0&pageSize=10",
     headers:{
       "X-RapidAPI-Host" => "skyscanner-skyscanner-flight-search-v1.p.rapidapi.com",
       "X-RapidAPI-Key" => "c036ae2334msh6e52f9287ee7e7ap1fbff8jsnb8c6fa5b89b5"
