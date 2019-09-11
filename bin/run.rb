@@ -149,12 +149,13 @@ class Session
         origin_code = get_airport_code("from")
         destination_code = get_airport_code("to")
         outbound_date = format_date(get_date("departing"))
-        results = Search.new(origin: origin_code, destination: destination_code, outbound_date: outbound_date).run_search
+        results = Search.new(origin_code: origin_code, destination_code: destination_code, outbound_date: outbound_date).run_search
     end
 
     #Validates the search results set
     def valid_results?(results)
         if !results
+            puts
             puts "No flights found. Please try an alternative route."
             main_menu
         end

@@ -6,15 +6,15 @@ require 'active_support/core_ext/hash'
 
 
 class Search
-  attr_reader :origin, :destination, :outbound_date, :inbound_date
+  attr_reader :origin_code, :destination_code, :outbound_date, :inbound_date
 
   @@max_results = 5
 
   ###### Instance methods ######
 
-  def initialize(origin:, destination:, outbound_date:, inbound_date: "")
-    @origin = origin
-    @destination = destination
+  def initialize(origin_code:, destination_code:, outbound_date:, inbound_date: "")
+    @origin_code = origin_code
+    @destination_code = destination_code
     @outbound_date = outbound_date
     @inbound_date = inbound_date
     @search_results = nil
@@ -67,8 +67,8 @@ class Search
           "country" => "UK",
           "currency" => "GBP",
           "locale" => "en-US",
-          "originPlace" => self.origin,
-          "destinationPlace" => self.destination,
+          "originPlace" => self.origin_code,
+          "destinationPlace" => self.destination_code,
           "outboundDate" => self.outbound_date,
           "adults" => 1
         }
