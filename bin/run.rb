@@ -277,19 +277,13 @@ class Session
         process_view_flights_choice(input)    
     end
 
-    #Fetch and format the user's flights array
+    #Fetch and format the user's flights array (uses reload to refresh cached values)
     def get_booked_flights
-        results = self.user.flights.each_with_object([]) do | flight, array |
+        results = self.user.flights.reload.each_with_object([]) do | flight, array |
             matching_booking = self.user.bookings.find { | booking | booking.flight_id == flight.id }
-            array << {
-                        "origin_name" => flight.origin,
-                        "origin_code" => flight.origin_code,
-                        "destination_name" => flight.destination,
-                        "destination_code" => flight.destination_code,
-                        "departure_time" => flight.departure_time,
-                        "arrival_time" => flight.arrival_time,
-                        "price" => matching_booking.price
-                     }
+            booking_details = flight.attributes.reject { | k, v | k == "id" }
+            booking_details["price"] = matching_booking.price
+            array << booking_details
         end
         format_results(results)
     end
@@ -317,6 +311,7 @@ class Session
             end
         end
         booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
+        binding.pry
         Booking.destroy(booking_id)
         puts
         puts "Success! Booking cancelled."
