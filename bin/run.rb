@@ -78,7 +78,8 @@ class Session
     def register
         name = @prompt.ask("Enter your name:") do |q|
             q.required true
-            q.validate /^[A-Za-z]{2,30}$/
+            q.validate /^[\p{L}\s'.-]+$/
+            q.messages[:valid?] = "Please enter a valid name"
             q.modify :capitalize
         end
         email = get_email
@@ -91,6 +92,7 @@ class Session
         email = @prompt.ask("Enter email:") do |q|
             q.required true
             q.validate /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/
+            q.messages[:valid?] = "Please enter a valid email"
             q.modify :down
         end
     end
@@ -100,6 +102,7 @@ class Session
         password = @prompt.mask("#{state} password (min. 8 characters):") do |q|
             q.required true
             q.validate /^[^ ]{8,100}$/
+            q.messages[:valid?] = "Passwords must be at least 8 characters"
         end
     end
 
@@ -147,6 +150,7 @@ class Session
 
     #Run the search and booking flow from start to finish
     def search_and_book_flights
+        puts
         search_results = search_flights
         valid_results?(search_results)
         flight_choice = select_flight_to_book(search_results)
@@ -202,6 +206,7 @@ class Session
         city = @prompt.ask("What city are you flying #{from_or_to}?") do |q|
             q.required true
             q.validate /^[A-Za-z\-& ]{2,30}$/
+            q.messages[:valid?] = "Please enter a valid city"
             q.modify :down
         end
 
@@ -225,6 +230,7 @@ class Session
         date = @prompt.ask("What date are you #{departing_or_returning}? DD-MM-YYYY") do |q|
             q.required true
             q.validate /(^(((0[1-9]|1[0-9]|2[0-8])[\/\-](0[1-9]|1[012]))|((29|30|31)[\/\-](0[13578]|1[02]))|((29|30)[\/\-](0[4,6,9]|11)))[\/\-](19|[2-9][0-9])\d\d$)|(^29[\/\-]02[\/\-](19|[2-9][0-9])(00|04|08|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96)$)/
+            q.messages[:valid?] = "Dates must use the format DD-MM-YYYY"
         end
         valid_date?(date) ? date : get_date(departing_or_returning)
     end
@@ -342,6 +348,7 @@ class Session
         old_password = @prompt.mask("Old password:") do |q|
             q.required true
             q.validate /^.*{,100}$/
+            q.messages[:valid?] = "Password is too long"
         end
         if old_password != self.user.password
             puts
