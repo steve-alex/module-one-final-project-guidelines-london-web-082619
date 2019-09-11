@@ -13,7 +13,7 @@ class Session
         main_menu
     end
 
-    
+
     private
 
     #####################
@@ -184,7 +184,7 @@ class Session
     def valid_results?(results)
         if !results
             puts
-            puts "No flights found. Please try an alternative route."
+            puts "No flights found. Please try an alternative route or change your search date."
             main_menu
         end
     end
