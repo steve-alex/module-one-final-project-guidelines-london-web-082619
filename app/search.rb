@@ -1,10 +1,3 @@
-#Unirest is  a set of lightweight HTTP libraries that allow GET, POST, PUT, PATCH and DELETE requests
-require 'unirest'
-require 'pry'
-require 'JSON'
-require 'active_support/core_ext/hash'
-
-
 class Search
   attr_reader :origin_code, :destination_code, :outbound_date, :inbound_date
 
