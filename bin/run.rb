@@ -280,7 +280,7 @@ class Session
     #Format the raw search results
     def format_results(results)
         results.map do | flight |
-            "✈️ #{flight['origin_name']} #{flight['origin_code']} ⏱#{flight['departure_time']} → #{flight['destination_name']} #{flight['destination_code']} ⏱#{flight['arrival_time']} 💷#{flight['price']}"
+            "✈️  #{flight['origin']} #{flight['origin_code']} ⏱ #{flight['departure_time']} → #{flight['destination']} #{flight['destination_code']} ⏱ #{flight['arrival_time']} 💰 #{flight['price']}"
         end
     end
 
@@ -295,7 +295,7 @@ class Session
         puts  "Here are your flights: "
         puts get_booked_flights
         puts
-        input = @prompt.select("Finished?", ["◀️ Main menu", "❌ Log out"])
+        input = @prompt.select("Finished?", ["◀️  Main menu", "❌  Log out"])
         process_view_flights_choice(input)    
     end
 
@@ -313,25 +313,28 @@ class Session
     #Process the user's decision after viewing their flights
     def process_view_flights_choice(input)
         case input
-        when "◀️ Main menu"
+        when "◀️  Main menu"
             main_menu
-        when "❌ Log out"
+        when "❌  Log out"
             process_main_menu_choice("Log out")
         end
     end
 
 
 
-    ##########################
+    ############################
     ###### Cancel flights ######
-    ##########################
+    ############################
     
     def cancel_booking
+        puts
         choice = @prompt.select("Choose a booking to cancel") do | menu |
             get_booked_flights.each_with_index do | result, index |
                 menu.choice(result, index)
             end
+            menu.choice("◀️ Back")
         end
+        main_menu if choice == "◀️ Back"
         booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
         Booking.destroy(booking_id)
         puts
