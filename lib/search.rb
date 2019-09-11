@@ -34,7 +34,7 @@ class Search
     session_key = get_key(session)
 
     begin
-      Timeout::timeout(10) do
+      Timeout::timeout(30) do
         get_search_results(session_key)
       end
     rescue Timeout::Error
@@ -73,13 +73,13 @@ class Search
         "adults" => 1
       }
     )
-    #Call create_session until the response is valid or the function times out
+
     valid_response?(response) ? response : create_session()
   end
 
   def valid_response?(response)
-    #Check that the POST method HTTPResponse header contains a valid :location
-    response.headers[:location]
+    #Check the response is valid
+    response.code == 201
   end
 
   def get_key(session)
@@ -98,6 +98,7 @@ class Search
 
     #Generate search_results hash from XML response
     @search_results = Hash.from_xml(raw_results.body)
+    get_search_results(session_key) if @search_results["PollSessionResponseDto"]["Status"] != "UpdatesComplete"
   end
 
   def search_results_valid?
@@ -116,7 +117,6 @@ class Search
   def create_itineraries
     #Creates a flight object hash for each flight queried by the API, then associates a flight_id and price with that flight object
     get_itineraries.each_with_object([]) do | itin, array |
-      binding.pry
       flight = {}
       flight["flight_id"] = itin["OutboundLegId"]
 
