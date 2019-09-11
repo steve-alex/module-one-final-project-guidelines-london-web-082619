@@ -18,7 +18,6 @@ class Session
         #Calls the methods that run the session
         welcome
         sign_in_prompt
-        main_menu
     end
 
     private
@@ -66,16 +65,21 @@ class Session
         password = get_password("Enter")
         if Person.exists?(email: email, password: password)
             @user = Person.find_by(email: email, password: password)
+            main_menu
         else  
-            no_user
+            incorrect_login
         end
     end
 
-    
-    def no_user
+    def incorrect_login
         #Handles sign-in requests where the user does not exist
         puts
-        choice = @prompt.select("That user doesn't exist.", ["Try again", "Register", "Quit"])
+        choice = @prompt.select("Incorrect email or password.", ["Try again", "Register", "Quit"])
+        process_incorrect_login_choice(choice)
+    end
+
+    def process_incorrect_login_choice(choice)
+        #Processes the user's decision when sign-in fails
         case choice
         when "Try again"
             sign_in
@@ -85,6 +89,7 @@ class Session
             process_main_menu_choice("Log out")
         end
     end
+
 
     def register
         #Prompts the user for registration details and creates a new user 
@@ -97,7 +102,34 @@ class Session
         end
         email = get_email
         password = get_password("Create")
-        @user = Person.create(name: name, email: email, password: password)
+
+        if Person.exists?(email: email)
+            user_exists
+        else
+            @user = Person.create(name: name, email: email, password: password)
+        end
+    end
+
+    def user_exists
+        #Handle attempts to create an account using an existing email address
+        puts
+        choice = @prompt.select("That email address is already in use.") do | menu |
+            menu.choice("Sign in")
+            menu.choice("Register new account")
+            menu.choice("Quit")
+        end
+        process_user_exists_choice(choice)  
+    end
+
+    def process_user_exists_choice(choice)
+        case choice
+        when "Sign in"
+            sign_in
+        when "Register new account"
+            register
+        when "Quit"
+            process_main_menu_choice("Log out")
+        end
     end
 
     def get_email
@@ -138,9 +170,9 @@ class Session
         process_main_menu_choice(choice)
     end
 
-    def process_main_menu_choice(input)
+    def process_main_menu_choice(choice)
         #Process the user's decision on the main menu. Handles all quit/logout commands
-        case input
+        case choice
         when "Search and book flights"
             run_search_query
         when "View booked flights"
@@ -366,6 +398,7 @@ class Session
         puts "Success! Booking cancelled."
         main_menu
     end
+
 
     #############################
     ###### Change password ######
