@@ -6,18 +6,13 @@ require 'pry'
 require_relative '../config/environment'
 
 class Session
-    attr_accessor :user
 
     def initialize
         @user = nil
         @prompt = TTY::Prompt.new
     end
 
-
-    #####################
-    ###### Welcome ######
-    #####################
-
+    
     #Run the session
     def run_session
         welcome
@@ -25,6 +20,11 @@ class Session
         main_menu
     end
 
+    private
+
+    #####################
+    ###### Welcome ######
+    #####################
 
     #Welcome the user to Skyscourer
     def welcome
@@ -64,7 +64,7 @@ class Session
         email = get_email
         password = get_password("Enter")
         if Person.exists?(email: email, password: password)
-            self.user = Person.find_by(email: email, password: password)
+            @user = Person.find_by(email: email, password: password)
         else  
             no_user
         end
@@ -86,14 +86,16 @@ class Session
 
     #Register a new user
     def register
+        puts
         name = @prompt.ask("Enter your name:") do |q|
             q.required true
-            q.validate /^[A-Za-z]{2,30}$/
+            q.validate /^[\p{L}\s'.-]+$/
+            q.messages[:valid?] = "Please enter a valid name"
             q.modify :capitalize
         end
         email = get_email
         password = get_password("Create")
-        self.user = Person.create(name: name, email: email, password: password)
+        @user = Person.create(name: name, email: email, password: password)
     end
 
     #Prompt the user for their email address
@@ -101,6 +103,7 @@ class Session
         email = @prompt.ask("Enter email:") do |q|
             q.required true
             q.validate /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/
+            q.messages[:valid?] = "Please enter a valid email"
             q.modify :down
         end
     end
@@ -110,6 +113,7 @@ class Session
         password = @prompt.mask("#{state} password (min. 8 characters):") do |q|
             q.required true
             q.validate /^[^ ]{8,100}$/
+            q.messages[:valid?] = "Passwords must be at least 8 characters"
         end
     end
 
@@ -121,7 +125,7 @@ class Session
     #List a signed-in user's options
     def main_menu
         puts
-        choice = @prompt.select("What would you like to do, #{self.user.name}?") do | menu |
+        choice = @prompt.select("What would you like to do, #{@user.name}?") do | menu |
             menu.choice("Search and book flights")
             menu.choice("View booked flights")
             menu.choice("Cancel a booking")
@@ -157,6 +161,7 @@ class Session
 
     #Run the search and booking flow from start to finish
     def search_and_book_flights
+        puts
         search_results = search_flights
         valid_results?(search_results)
         flight_choice = select_flight_to_book(search_results)
@@ -171,6 +176,7 @@ class Session
         origin_code = get_airport_code("from")
         destination_code = get_airport_code("to")
         outbound_date = format_date(get_date("departing"))
+        puts
         results = nil
         spinner = TTY::Spinner.new("Searching for flights :spinner 🛫  :spinner", format: :arrow_pulse)
         spinner.run do
@@ -201,7 +207,7 @@ class Session
             flight_hash.filter { | k, v | k != "price" && k != "flight_id" }
         )
         booking = Booking.create(
-            person_id: self.user.id,
+            person_id: @user.id,
             flight_id: flight.id,
             price: flight_hash["price"]
         )
@@ -212,6 +218,7 @@ class Session
         city = @prompt.ask("What city are you flying #{from_or_to}?") do |q|
             q.required true
             q.validate /^[A-Za-z\-& ]{2,30}$/
+            q.messages[:valid?] = "Please enter a valid city"
             q.modify :down
         end
 
@@ -235,6 +242,7 @@ class Session
         date = @prompt.ask("What date are you #{departing_or_returning}? DD-MM-YYYY") do |q|
             q.required true
             q.validate /(^(((0[1-9]|1[0-9]|2[0-8])[\/\-](0[1-9]|1[012]))|((29|30|31)[\/\-](0[13578]|1[02]))|((29|30)[\/\-](0[4,6,9]|11)))[\/\-](19|[2-9][0-9])\d\d$)|(^29[\/\-]02[\/\-](19|[2-9][0-9])(00|04|08|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96)$)/
+            q.messages[:valid?] = "Dates must use the format DD-MM-YYYY"
         end
         valid_date?(date) ? date : get_date(departing_or_returning)
     end
@@ -262,20 +270,21 @@ class Session
 
     #Prompt the user to book a flight returned by their search
     def choose_flight(formatted_results)
+        puts
         choice = @prompt.select("Choose a flight to book") do | menu |
             formatted_results.each_with_index do | result, index |
                 menu.choice(result, index)
             end
-            menu.choice("◀️ Back")
+            menu.choice("◀️  Back")
         end
-        main_menu if choice == "◀️ Back"
+        main_menu if choice == "◀️  Back"
         choice
     end
 
     #Format the raw search results
     def format_results(results)
         results.map do | flight |
-            "✈️ #{flight['origin_name']} #{flight['origin_code']} ⏱#{flight['departure_time']} → #{flight['destination_name']} #{flight['destination_code']} ⏱#{flight['arrival_time']} 💷#{flight['price']}"
+            "✈️  #{flight['origin']} #{flight['origin_code']} ⏱ #{flight['departure_time']} → #{flight['destination']} #{flight['destination_code']} ⏱ #{flight['arrival_time']} 💰 #{flight['price']}"
         end
     end
 
@@ -287,17 +296,21 @@ class Session
     #Show the user the flights they've booked
     def view_booked_flights
         puts
-        puts  "Here are your flights: "
-        puts get_booked_flights
+        if @user.bookings.reload[0]
+            puts "Here are your bookings:"
+            puts get_booked_flights
+        else
+            puts "You don't have any bookings yet."
+        end
         puts
-        input = @prompt.select("Finished?", ["◀️ Main menu", "❌ Log out"])
+        input = @prompt.select("Finished?", ["◀️  Main menu", "❌  Log out"])
         process_view_flights_choice(input)    
     end
 
     #Fetch and format the user's flights array (uses reload to refresh cached values)
     def get_booked_flights
-        results = self.user.flights.reload.each_with_object([]) do | flight, array |
-            matching_booking = self.user.bookings.find { | booking | booking.flight_id == flight.id }
+        results = @user.flights.reload.each_with_object([]) do | flight, array |
+            matching_booking = @user.bookings.find { | booking | booking.flight_id == flight.id }
             booking_details = flight.attributes.reject { | k, v | k == "id" }
             booking_details["price"] = matching_booking.price
             array << booking_details
@@ -308,26 +321,36 @@ class Session
     #Process the user's decision after viewing their flights
     def process_view_flights_choice(input)
         case input
-        when "◀️ Main menu"
+        when "◀️  Main menu"
             main_menu
-        when "❌ Log out"
+        when "❌  Log out"
             process_main_menu_choice("Log out")
         end
     end
 
 
 
-    ##########################
+    ############################
     ###### Cancel flights ######
-    ##########################
+    ############################
     
     def cancel_booking
-        choice = @prompt.select("Choose a booking to cancel") do | menu |
-            get_booked_flights.each_with_index do | result, index |
-                menu.choice(result, index)
+        puts
+        if @user.bookings.reload[0]
+            choice = @prompt.select("Choose a booking to cancel") do | menu |
+                get_booked_flights.each_with_index { | result, index | menu.choice(result, index) }
+                menu.choice("◀️  Back")
             end
+            process_cancellation(choice)
+        else
+            puts "You don't have any bookings yet."
+            main_menu
         end
-        booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
+    end
+
+    def process_cancellation(choice)
+        main_menu if choice == "◀️  Back"
+        booking_id = @user.bookings.find_by(flight: @user.flights[choice]).id
         Booking.destroy(booking_id)
         puts
         puts "Success! Booking cancelled."
@@ -341,7 +364,7 @@ class Session
     #Run the change password flow
     def change_password
         verify_password
-        self.user.update(password: get_password("Create new"))
+        @user.update(password: get_password("Create new"))
         puts "Success! Password updated."
         puts
         main_menu
@@ -349,11 +372,13 @@ class Session
 
     #Confirm the user's identity before they change their password
     def verify_password
-        old_password = @prompt.mask("Old password:") do |q|
+        puts
+        old_password = @prompt.mask("Enter your old password:") do |q|
             q.required true
             q.validate /^.*{,100}$/
+            q.messages[:valid?] = "Password is too long"
         end
-        if old_password != self.user.password
+        if old_password != @user.password
             puts
             puts "Incorrect password. Please try again."
             verify_password
