@@ -17,6 +17,14 @@ class Session
     ###### Welcome ######
     #####################
 
+    #Run the session
+    def run_session
+        welcome
+        sign_in_prompt
+        main_menu
+    end
+
+
     #Welcome the user to Skyscourer
     def welcome
         puts
@@ -143,6 +151,9 @@ class Session
         valid_results?(search_results)
         flight_choice = select_flight_to_book(search_results)
         book_flight(search_results[flight_choice])
+        puts
+        puts "Flight booked!"
+        main_menu
     end
 
     #Returns search results for user input
@@ -153,7 +164,7 @@ class Session
         results = nil
         spinner = TTY::Spinner.new("Searching for flights :spinner 🛫  :spinner", format: :arrow_pulse)
         spinner.run do
-            results = Search.new(origin: origin_code, destination: destination_code, outbound_date: outbound_date).run_search
+            results = Search.new(origin_code: origin_code, destination_code: destination_code, outbound_date: outbound_date).run_search
         end
         spinner.stop('done')
         results
@@ -162,6 +173,7 @@ class Session
     #Validates the search results set
     def valid_results?(results)
         if !results
+            puts
             puts "No flights found. Please try an alternative route."
             main_menu
         end
@@ -176,12 +188,7 @@ class Session
     #Book the specified flight in the given results set
     def book_flight(flight_hash)
         flight = Flight.find_or_create_by(
-            origin: flight_hash["origin_name"],
-            destination: flight_hash["destination_name"],
-            origin_code: flight_hash["origin_code"],
-            destination_code: flight_hash["destination_code"],
-            departure_time: flight_hash["departure_time"],
-            arrival_time: flight_hash["arrival_time"]
+            flight_hash.filter { | k, v | k != "price" && k != "flight_id" }
         )
         booking = Booking.create(
             person_id: self.user.id,
@@ -277,19 +284,13 @@ class Session
         process_view_flights_choice(input)    
     end
 
-    #Fetch and format the user's flights array
+    #Fetch and format the user's flights array (uses reload to refresh cached values)
     def get_booked_flights
-        results = self.user.flights.each_with_object([]) do | flight, array |
+        results = self.user.flights.reload.each_with_object([]) do | flight, array |
             matching_booking = self.user.bookings.find { | booking | booking.flight_id == flight.id }
-            array << {
-                        "origin_name" => flight.origin,
-                        "origin_code" => flight.origin_code,
-                        "destination_name" => flight.destination,
-                        "destination_code" => flight.destination_code,
-                        "departure_time" => flight.departure_time,
-                        "arrival_time" => flight.arrival_time,
-                        "price" => matching_booking.price
-                     }
+            booking_details = flight.attributes.reject { | k, v | k == "id" }
+            booking_details["price"] = matching_booking.price
+            array << booking_details
         end
         format_results(results)
     end
@@ -357,7 +358,4 @@ class Session
 
 end
 
-session = Session.new
-session.welcome
-session.sign_in_prompt
-session.main_menu
+Session.new.run_session
