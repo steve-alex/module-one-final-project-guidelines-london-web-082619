@@ -1,5 +1,6 @@
 #require_relative '../config/environment'
 require 'tty-prompt'
+require 'tty-table'
 require 'tty-spinner'
 require 'pry'
 require_relative '../config/environment'
