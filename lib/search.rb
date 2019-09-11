@@ -145,8 +145,8 @@ class Search
       destination_airport = find_airport_object(matching_leg["DestinationStation"])
       flight["origin_code"] = origin_airport["Code"]
       flight["destination_code"] = destination_airport["Code"]
-      flight["origin_name"] = origin_airport["Name"]
-      flight["destination_name"] = destination_airport["Name"]
+      flight["origin"] = origin_airport["Name"]
+      flight["destination"] = destination_airport["Name"]
     end
   end
 

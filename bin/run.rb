@@ -16,6 +16,14 @@ class Session
     ###### Welcome ######
     #####################
 
+    #Run the session
+    def run_session
+        welcome
+        sign_in_prompt
+        main_menu
+    end
+
+
     #Welcome the user to Skyscourer
     def welcome
         puts
@@ -142,6 +150,9 @@ class Session
         valid_results?(search_results)
         flight_choice = select_flight_to_book(search_results)
         book_flight(search_results[flight_choice])
+        puts
+        puts "Flight booked!"
+        main_menu
     end
 
     #Returns search results for user input
@@ -170,12 +181,7 @@ class Session
     #Book the specified flight in the given results set
     def book_flight(flight_hash)
         flight = Flight.find_or_create_by(
-            origin: flight_hash["origin_name"],
-            destination: flight_hash["destination_name"],
-            origin_code: flight_hash["origin_code"],
-            destination_code: flight_hash["destination_code"],
-            departure_time: flight_hash["departure_time"],
-            arrival_time: flight_hash["arrival_time"]
+            flight_hash.filter { | k, v | k != "price" && k != "flight_id" }
         )
         booking = Booking.create(
             person_id: self.user.id,
@@ -351,7 +357,4 @@ class Session
 
 end
 
-session = Session.new
-session.welcome
-session.sign_in_prompt
-session.main_menu
+Session.new.run_session
