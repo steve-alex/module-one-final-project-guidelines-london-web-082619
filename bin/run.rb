@@ -295,9 +295,12 @@ class Session
     #Show the user the flights they've booked
     def view_booked_flights
         puts
-        puts  "Here are your bookings: "
-        puts
-        puts get_booked_flights
+        if self.user.bookings.reload[0]
+            puts "Here are your bookings:"
+            puts get_booked_flights
+        else
+            puts "You don't have any bookings yet."
+        end
         puts
         input = @prompt.select("Finished?", ["◀️  Main menu", "❌  Log out"])
         process_view_flights_choice(input)    
@@ -332,12 +335,21 @@ class Session
     
     def cancel_booking
         puts
-        choice = @prompt.select("Choose a booking to cancel") do | menu |
-            get_booked_flights.each_with_index do | result, index |
-                menu.choice(result, index)
+        if self.user.bookings.reload[0]
+            choice = @prompt.select("Choose a booking to cancel") do | menu |
+                get_booked_flights.each_with_index do | result, index |
+                    menu.choice(result, index)
+                end
+                menu.choice("◀️  Back")
             end
-            menu.choice("◀️  Back")
+            process_cancellation(choice)
+        else
+            puts "You don't have any bookings yet."
+            main_menu
         end
+    end
+
+    def process_cancellation(choice)
         main_menu if choice == "◀️  Back"
         booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
         Booking.destroy(booking_id)
