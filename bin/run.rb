@@ -1,5 +1,6 @@
 #require_relative '../config/environment'
 require 'tty-prompt'
+require 'tty-spinner'
 require 'pry'
 require_relative '../config/environment'
 
@@ -149,7 +150,13 @@ class Session
         origin_code = get_airport_code("from")
         destination_code = get_airport_code("to")
         outbound_date = format_date(get_date("departing"))
-        results = Search.new(origin: origin_code, destination: destination_code, outbound_date: outbound_date).run_search
+        results = nil
+        spinner = TTY::Spinner.new("Searching for flights :spinner 🛫  :spinner", format: :arrow_pulse)
+        spinner.run do
+            results = Search.new(origin: origin_code, destination: destination_code, outbound_date: outbound_date).run_search
+        end
+        spinner.stop('done')
+        results
     end
 
     #Validates the search results set
