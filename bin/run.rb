@@ -11,7 +11,10 @@ class Session
         @prompt = TTY::Prompt.new
     end
 
-    ###### Instance methods ######
+
+    #####################
+    ###### Welcome ######
+    #####################
 
     #Welcome the user to Skyscourer
     def welcome
@@ -38,7 +41,6 @@ class Session
         password = get_password("Enter")
         if Person.exists?(email: email, password: password)
             self.user = Person.find_by(email: email, password: password)
-            binding.pry
         else  
             no_user
         end
@@ -79,56 +81,90 @@ class Session
         end
     end
 
+
+    #######################
+    ###### Main menu ######
+    #######################
+
     #List a signed-in user's options
     def main_menu
         choice = @prompt.select("What would you like to do, #{self.user.name}?") do | menu |
-            menu.choice("Search flights")
+            menu.choice("Search and book flights")
             menu.choice("View booked flights")
-            menu.choice("Change a flight")
             menu.choice("Cancel a flight")
+            menu.choice("Change password")
         end
         process_main_menu_choice(choice)
     end
 
     def process_main_menu_choice(input)
         case input
-        when "Search flights"
-            search_flights
+        when "Search and book flights"
+            search_and_book_flights
     #     when "View booked flights"
-    #     when "Change a flight"
     #     when "Cancel a flight"
+        when "Change password"
+            change_password
         end
     end
 
+
+    ###########################
+    ###### Flight search ######
+    ###########################
+
+    #Run the search and booking flow from start to finish
+    def search_and_book_flights
+        search_results = search_flights
+        valid_results?(search_results)
+        flight_choice = select_flight_to_book(search_results)
+        book_flight(search_results[flight_choice])
+    end
+
+    #Returns search results for user input
     def search_flights
         origin_code = get_airport_code("from")
         destination_code = get_airport_code("to")
         outbound_date = format_date(get_date("departing"))
         results = Search.new(origin: origin_code, destination: destination_code, outbound_date: outbound_date).run_search
-        valid_results?(results)
+    end
+
+    #Validates the search results set
+    def valid_results?(results)
+        if !results
+            puts "No flights found. Please try an alternative route."
+            main_menu
+        end
+    end
+
+    #Returns the index of the user's chosen flight in the results array
+    def select_flight_to_book(results)
         formatted_results = format_results(results)
-        flight_choice = choose_flight(formatted_results)
+        choose_flight(formatted_results)
+    end
+
+    #Book the specified flight in the given results set
+    def book_flight(flight_hash)
         flight = Flight.find_or_create_by(
-            origin: results[flight_choice]["origin_name"],
-            destination: results[flight_choice]["destination_name"],
-            origin_code: results[flight_choice]["origin_code"],
-            destination_code: results[flight_choice]["destination_code"],
-            departure_time: results[flight_choice]["departure_time"],
-            arrival_time: results[flight_choice]["arrival_time"]
+            origin: flight_hash["origin_name"],
+            destination: flight_hash["destination_name"],
+            origin_code: flight_hash["origin_code"],
+            destination_code: flight_hash["destination_code"],
+            departure_time: flight_hash["departure_time"],
+            arrival_time: flight_hash["arrival_time"]
         )
         booking = Booking.create(
             person_id: self.user.id,
             flight_id: flight.id,
-            price: results[flight_choice]["price"]
+            price: flight_hash["price"]
         )
-        binding.pry
     end
 
     #Takes a city name from the user and returns the airport code
     def get_airport_code(from_or_to)
         city = @prompt.ask("What city are you flying #{from_or_to}?") do |q|
             q.required true
-            q.validate /^[A-Za-z\-&]{2,30}$/
+            q.validate /^[A-Za-z\-& ]{2,30}$/
             q.modify :down
         end
 
@@ -175,13 +211,7 @@ class Session
         new_date = [date_chunks[2], date_chunks[1], date_chunks[0]].join("-")
     end
 
-    #Validates the search results set
-    def valid_results?(results)
-        if !results
-            puts "No flights found. Please try an alternative route."
-            main_menu
-        end
-    end
+    
 
     #Prompt the user to book a flight returned by their search
     def choose_flight(formatted_results)
@@ -217,4 +247,44 @@ class Session
     #             #{booking.flight.origin_code} 
 
 
+    #############################
+    ###### Change password ######
+    #############################
+    
+    #Run the change password flow
+    def change_password
+        verify_password
+        self.user.update(password: get_password("Create new"))
+        puts "Success! Password updated."
+        puts
+        main_menu
+    end
+
+    #Confirm the user's identity before they change their password
+    def verify_password
+        old_password = @prompt.mask("Old password:") do |q|
+            q.required true
+            q.validate /^.*{,100}$/
+        end
+        if old_password != self.user.password
+            puts
+            puts "Incorrect password. Please try again."
+            verify_password
+        else
+            true
+        end
+    end
+        
+
+
+
+
 end
+
+session = Session.new
+session.welcome
+session.sign_in_prompt
+session.main_menu
+
+
+
