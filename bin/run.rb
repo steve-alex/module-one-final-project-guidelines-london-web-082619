@@ -91,8 +91,8 @@ class Session
         choice = @prompt.select("What would you like to do, #{self.user.name}?") do | menu |
             menu.choice("Search and book flights")
             menu.choice("View booked flights")
-            menu.choice("Change a flight")
             menu.choice("Cancel a flight")
+            menu.choice("Change password")
         end
         process_main_menu_choice(choice)
     end
@@ -102,8 +102,9 @@ class Session
         when "Search and book flights"
             search_and_book_flights
     #     when "View booked flights"
-    #     when "Change a flight"
     #     when "Cancel a flight"
+        when "Change password"
+            change_password
         end
     end
 
@@ -118,7 +119,6 @@ class Session
         valid_results?(search_results)
         flight_choice = select_flight_to_book(search_results)
         book_flight(search_results[flight_choice])
-        binding.pry
     end
 
     #Returns search results for user input
@@ -164,7 +164,7 @@ class Session
     def get_airport_code(from_or_to)
         city = @prompt.ask("What city are you flying #{from_or_to}?") do |q|
             q.required true
-            q.validate /^[A-Za-z\-&]{2,30}$/
+            q.validate /^[A-Za-z\-& ]{2,30}$/
             q.modify :down
         end
 
@@ -245,6 +245,38 @@ class Session
     #         booking_string = <<-BOOKING
     #             #{booking.flight.origin.capitalize} 
     #             #{booking.flight.origin_code} 
+
+
+    #############################
+    ###### Change password ######
+    #############################
+    
+    #Run the change password flow
+    def change_password
+        verify_password
+        self.user.update(password: get_password("Create new"))
+        puts "Success! Password updated."
+        puts
+        main_menu
+    end
+
+    #Confirm the user's identity before they change their password
+    def verify_password
+        old_password = @prompt.mask("Old password:") do |q|
+            q.required true
+            q.validate /^.*{,100}$/
+        end
+        if old_password != self.user.password
+            puts
+            puts "Incorrect password. Please try again."
+            verify_password
+        else
+            true
+        end
+    end
+        
+
+
 
 
 end
