@@ -194,7 +194,6 @@ class Search
         "X-RapidAPI-Key" => "407d1ed52amsh672332be486dc02p1be71fjsn7639b4ef4b82"
       })
       places_hash = Hash.from_xml(response.body)
-      binding.pry
       if !places_hash["AutoSuggestServiceResponseApiDto"]["Places"]
         return nil
       elsif places_hash["AutoSuggestServiceResponseApiDto"]["Places"]["PlaceDto"].is_a?(Array)

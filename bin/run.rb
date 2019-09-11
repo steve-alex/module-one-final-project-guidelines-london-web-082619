@@ -38,7 +38,6 @@ class Session
         password = get_password("Enter")
         if Person.exists?(email: email, password: password)
             self.user = Person.find_by(email: email, password: password)
-            binding.pry
         else  
             no_user
         end
@@ -94,9 +93,12 @@ class Session
         case input
         when "Search flights"
             search_flights
-    #     when "View booked flights"
-    #     when "Change a flight"
-    #     when "Cancel a flight"
+        when "View booked flights"
+            view_booked_flights
+    #    when "View booked flights"
+    #    when "Change a flight"
+        when "Cancel a flight"
+            cancel_a_flight
         end
     end
 
@@ -121,7 +123,6 @@ class Session
             flight_id: flight.id,
             price: results[flight_choice]["price"]
         )
-        binding.pry
     end
 
     #Takes a city name from the user and returns the airport code
@@ -203,19 +204,28 @@ class Session
     ##########################
     ###### View flights ######
     ##########################
-    # def view_booked_flights
-    #     flight_list = []
-    #     Person.bookings.map do | booking |
-    #         flight_list[:price] = booking.price
-    #     end
-    #     Person.flights.map do | flight |
 
-    # def booking_to_string(booking)
-    #     Person.bookings.each_with_object([]) do | booking |
-    #         booking_string = <<-BOOKING
-    #             #{booking.flight.origin.capitalize} 
-    #             #{booking.flight.origin_code} 
+    def view_booked_flights
+        puts get_booked_flights
+    end
 
+    def get_booked_flights
+        format_results(self.user.flights)
+    end
+
+    ##########################
+    ###### Cancel flights ######
+    ##########################
+    
+    def cancel_a_flight
+        choice = @prompt.select("Choose a flight to cancel") do | menu |
+            get_booked_flights.each_with_index do | result, index |
+                menu.choice(result, index)
+            end
+        end
+        booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
+        Booking.destroy(booking_id)
+    end
 
 end
 
@@ -223,7 +233,3 @@ session = Session.new
 session.welcome
 session.sign_in_prompt
 session.main_menu
-
-
-
-
