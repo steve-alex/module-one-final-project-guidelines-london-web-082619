@@ -85,6 +85,7 @@ class Session
 
     #Register a new user
     def register
+        puts
         name = @prompt.ask("Enter your name:") do |q|
             q.required true
             q.validate /^[\p{L}\s'.-]+$/
@@ -174,6 +175,7 @@ class Session
         origin_code = get_airport_code("from")
         destination_code = get_airport_code("to")
         outbound_date = format_date(get_date("departing"))
+        puts
         results = nil
         spinner = TTY::Spinner.new("Searching for flights :spinner 🛫  :spinner", format: :arrow_pulse)
         spinner.run do
@@ -267,13 +269,14 @@ class Session
 
     #Prompt the user to book a flight returned by their search
     def choose_flight(formatted_results)
+        puts
         choice = @prompt.select("Choose a flight to book") do | menu |
             formatted_results.each_with_index do | result, index |
                 menu.choice(result, index)
             end
-            menu.choice("◀️ Back")
+            menu.choice("◀️  Back")
         end
-        main_menu if choice == "◀️ Back"
+        main_menu if choice == "◀️  Back"
         choice
     end
 
@@ -292,7 +295,8 @@ class Session
     #Show the user the flights they've booked
     def view_booked_flights
         puts
-        puts  "Here are your flights: "
+        puts  "Here are your bookings: "
+        puts
         puts get_booked_flights
         puts
         input = @prompt.select("Finished?", ["◀️  Main menu", "❌  Log out"])
@@ -332,9 +336,9 @@ class Session
             get_booked_flights.each_with_index do | result, index |
                 menu.choice(result, index)
             end
-            menu.choice("◀️ Back")
+            menu.choice("◀️  Back")
         end
-        main_menu if choice == "◀️ Back"
+        main_menu if choice == "◀️  Back"
         booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
         Booking.destroy(booking_id)
         puts
@@ -357,7 +361,8 @@ class Session
 
     #Confirm the user's identity before they change their password
     def verify_password
-        old_password = @prompt.mask("Old password:") do |q|
+        puts
+        old_password = @prompt.mask("Enter your old password:") do |q|
             q.required true
             q.validate /^.*{,100}$/
             q.messages[:valid?] = "Password is too long"
