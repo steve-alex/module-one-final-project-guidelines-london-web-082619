@@ -3,6 +3,7 @@ require 'tty-prompt'
 require 'tty-table'
 require 'tty-spinner'
 require 'pry'
+require 'date'
 require_relative '../config/environment'
 
 class Session
@@ -85,7 +86,6 @@ class Session
         end
     end
 
-    
     def register
         #Prompts the user for registration details and creates a new user 
         puts
@@ -100,7 +100,6 @@ class Session
         @user = Person.create(name: name, email: email, password: password)
     end
 
-    
     def get_email
         #Prompt the user for their email address
         email = @prompt.ask("Enter email:") do |q|
@@ -143,7 +142,7 @@ class Session
         #Process the user's decision on the main menu. Handles all quit/logout commands
         case input
         when "Search and book flights"
-            search_and_book_flights
+            run_search_query
         when "View booked flights"
             view_booked_flights    
         when "Cancel a booking"
@@ -272,8 +271,6 @@ class Session
         new_date = [date_chunks[2], date_chunks[1], date_chunks[0]].join("-")
     end
 
-    
-
     def choose_flight(formatted_results)
         #Prompt the user to book a flight returned by their search
         puts
@@ -290,10 +287,16 @@ class Session
     def format_results(results)
         #Format the raw search results
         results.map do | flight |
-            "✈️  #{flight['origin']} #{flight['origin_code']} ⏱ #{flight['departure_time']} → #{flight['destination']} #{flight['destination_code']} ⏱ #{flight['arrival_time']} 💰 #{flight['price']}"
+            departure_time = format_time(flight['departure_time'])
+            arrival_time = format_time(flight['arrival_time'])
+            "✈️  #{flight['origin']} #{flight['origin_code']} ⏱ #{departure_time} → #{flight['destination']} #{flight['destination_code']} ⏱ #{arrival_time} 💰 #{flight['price']}"
         end
     end
 
+    def format_time(time)
+        date = DateTime.parse(time)
+        date.strftime("%I:%M%p %d-%m-%Y")
+    end
 
     ##########################
     ###### View flights ######
@@ -333,8 +336,6 @@ class Session
             process_main_menu_choice("Log out")
         end
     end
-
-
 
     ############################
     ###### Cancel flights ######
