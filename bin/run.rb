@@ -311,7 +311,6 @@ class Session
             end
         end
         booking_id = self.user.bookings.find_by(flight: self.user.flights[choice]).id
-        binding.pry
         Booking.destroy(booking_id)
         puts
         puts "Success! Booking cancelled."
