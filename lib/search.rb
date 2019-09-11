@@ -97,7 +97,7 @@ class Search
   end
 
   def search_results_valid?
-    get_itineraries && get_airports && get_legs
+    @search_results["PollSessionResponseDto"]["Itineraries"]
   end
 
 
@@ -160,13 +160,8 @@ class Search
     end
   end
 
-  # #Extract itineraries from search results hash
-  # def itineraries_valid?
-  #   @search_results["PollSessionResponseDto"]["Itineraries"]
-  # end
-
   def get_itineraries
-    @search_results["PollSessionResponseDto"]["Itineraries"]["ItineraryApiDto"]
+      @search_results["PollSessionResponseDto"]["Itineraries"]["ItineraryApiDto"]
   end
   
   #Return an array of legs that match an itinerary (departure time data)

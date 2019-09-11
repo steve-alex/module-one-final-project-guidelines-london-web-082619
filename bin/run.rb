@@ -181,12 +181,13 @@ class Session
         outbound_date = format_date(get_date("departing"))
         puts
         results = nil
-        spinner = TTY::Spinner.new("Searching for flights :spinner 🛫  :spinner", format: :arrow_pulse)
-        spinner.run do
-            results = Search.new(origin_code: origin_code, destination_code: destination_code, outbound_date: outbound_date).run_search
-        end
-        spinner.stop('done')
-        results
+        results = Search.new(origin_code: origin_code, destination_code: destination_code, outbound_date: outbound_date).run_search
+        # spinner = TTY::Spinner.new("Searching for flights :spinner 🛫  :spinner", format: :arrow_pulse)
+        # spinner.run do
+        #     results = Search.new(origin_code: origin_code, destination_code: destination_code, outbound_date: outbound_date).run_search
+        # end
+        # spinner.stop('done')
+        # results
     end
 
     def valid_search_results?(results)
