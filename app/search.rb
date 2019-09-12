@@ -1,15 +1,16 @@
 class Search
-  attr_reader :origin_code, :destination_code, :outbound_date, :inbound_date
+  attr_reader :origin_code, :destination_code, :outbound_date, :inbound_date, :cabin_class
 
   @@max_results = 5
 
   ###### Instance methods ######
 
-  def initialize(origin_code:, destination_code:, outbound_date:, inbound_date: "")
+  def initialize(origin_code:, destination_code:, outbound_date:, inbound_date: "", cabin_class:)
     @origin_code = origin_code
     @destination_code = destination_code
     @outbound_date = outbound_date
     @inbound_date = inbound_date
+    @cabin_class = cabin_class
     @search_results = nil
   end
   
@@ -54,7 +55,7 @@ class Search
       },
       parameters:{
         "inboundDate" => self.inbound_date,
-        "cabinClass" => "economy",
+        "cabinClass" => self.cabin_class,
         "children" => 0,
         "infants" => 0,
         "country" => "UK",

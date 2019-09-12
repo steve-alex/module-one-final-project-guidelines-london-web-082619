@@ -170,11 +170,12 @@ class Session
         origin_code = get_airport_code("from")
         destination_code = get_airport_code("to")
         outbound_date = format_date(get_date("departing"))
+        cabin_class = get_cabin_class
         puts
         results = nil
         spinner = TTY::Spinner.new("Searching for flights :spinner 🛫  :spinner", format: :arrow_pulse)
         spinner.run do
-            results = Search.new(origin_code: origin_code, destination_code: destination_code, outbound_date: outbound_date).run_search
+            results = Search.new(origin_code: origin_code, destination_code: destination_code, outbound_date: outbound_date, cabin_class: cabin_class).run_search
         end
         spinner.stop('done')
         results
@@ -260,7 +261,9 @@ class Session
         new_date = [date_chunks[2], date_chunks[1], date_chunks[0]].join("-")
     end
 
-    
+    def get_cabin_class
+        cabin_class = @prompt.select("What cabin class would you like to book?", ['economy', 'premiumeconomy', 'business', 'first'])
+    end
 
     #Prompt the user to book a flight returned by their search
     def choose_flight(formatted_results)
@@ -278,8 +281,14 @@ class Session
     #Format the raw search results
     def format_results(results)
         results.map do | flight |
-            "✈️  #{flight['origin']} #{flight['origin_code']} ⏱ #{flight['departure_time']} → #{flight['destination']} #{flight['destination_code']} ⏱ #{flight['arrival_time']} 💰 #{flight['price']}"
+            departure_time = format_time(flight['departure_time'])
+            arrival_time = format_time(flight['arrival_time'])
+            "✈️  #{flight['origin']} #{flight['origin_code']} ⏱ #{departure_time} → #{flight['destination']} #{flight['destination_code']} ⏱ #{arrival_time} 💰 #{flight['price']}"
         end
+    end
+
+    def format_time(time)
+        DateTime.parse(time).strftime("%l:%M %p, %d %b, %Y")
     end
 
 

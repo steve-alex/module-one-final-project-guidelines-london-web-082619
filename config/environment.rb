@@ -7,6 +7,7 @@ require 'active_support/core_ext/hash'
 require 'tty-prompt'
 require 'tty-table'
 require 'tty-spinner'
+require 'date'
 
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: 'db/development.db')
 require_all 'app'
