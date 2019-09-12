@@ -28,7 +28,7 @@ class Search
     session_key = get_key(session)
 
     begin
-      Timeout::timeout(30) do
+      Timeout::timeout(60) do
         get_search_results(session_key)
       end
     rescue Timeout::Error
