@@ -168,7 +168,7 @@ class Search
 
   #Takes in a list of flights and returns the cheapest flight for each arrival time
   def cheapest_unique_flights(flights)
-    flights.uniq { | flight | flight["arrival_time"] }
+    flights.uniq { | flight | flight["arrival_time"] && flight["departure_time"] }
   end
 
   ###### Class methods ######
