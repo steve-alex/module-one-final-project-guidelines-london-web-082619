@@ -1,0 +1,7 @@
+default: &default
+  adapter: sqlite3
+  encoding: unicode
+  pool: 5
+development:
+  <<: *default
+  database: "db/development.db"

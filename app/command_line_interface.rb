@@ -262,7 +262,12 @@ class Session
     end
 
     def get_cabin_class
-        cabin_class = @prompt.select("What cabin class would you like to book?", ['economy', 'premiumeconomy', 'business', 'first'])
+        cabin_class = @prompt.select("What cabin class would you like to book?") do |menu|
+            menu.choice('Economy', 'economy')
+            menu.choice('Premium Economy', 'premiumeconomy')
+            menu.choice('Business', 'business')
+            menu.choice('First', 'first')
+        end
     end
 
     #Prompt the user to book a flight returned by their search
