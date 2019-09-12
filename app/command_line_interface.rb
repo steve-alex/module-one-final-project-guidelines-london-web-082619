@@ -264,7 +264,6 @@ class Session
     def get_cabin_class
         cabin_class = @prompt.select("What cabin class would you like to book?") do |menu|
             menu.choice('Economy', 'economy')
-            menu.choice('Premium Economy', 'premiumeconomy')
             menu.choice('Business', 'business')
             menu.choice('First', 'first')
         end
