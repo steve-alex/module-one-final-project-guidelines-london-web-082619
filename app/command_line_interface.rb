@@ -4,10 +4,9 @@ class Session
         @user = nil
         @prompt = TTY::Prompt.new
     end
-
     
-    #Run the session
     def run_session
+        # Run the session
         welcome
         sign_in_prompt
         main_menu
@@ -20,8 +19,8 @@ class Session
     ###### Welcome ######
     #####################
 
-    #Welcome the user to Skyscourer
     def welcome
+        # Welcome the user to Skyscourer
         puts
         puts "
    ┌───────────────────────────────────────────────────────────────────────────┐                                                                      
@@ -37,8 +36,8 @@ class Session
         puts
     end
 
-    #Prompt the user to sign in
     def sign_in_prompt
+        # Prompt the user to sign in
         puts
         choice = @prompt.select("To start, sign in or create an account:", ["Sign in", "Register", "Quit"])
         case choice
@@ -50,9 +49,9 @@ class Session
             process_main_menu_choice("Log out")
         end
     end
-
-    #Get and validate sign-in details
+    
     def sign_in
+        # Get and validate sign-in details
         puts
         puts "Sign in with your email and password.\n"
         email = get_email
@@ -64,8 +63,8 @@ class Session
         end
     end
 
-    #Handle sign-in requests where the user does not exist
     def no_user
+        # Handle sign-in requests where the user does not exist
         puts
         choice = @prompt.select("That user doesn't exist.", ["Try again", "Register", "Quit"])
         case choice
@@ -77,9 +76,9 @@ class Session
             process_main_menu_choice("Log out")
         end
     end
-
-    #Register a new user
+ 
     def register
+        # Register a new user
         puts
         name = @prompt.ask("Enter your name:") do |q|
             q.required true
@@ -92,8 +91,8 @@ class Session
         @user = Person.create(name: name, email: email, password: password)
     end
 
-    #Prompt the user for their email address
     def get_email
+        # Prompt the user for their email address
         email = @prompt.ask("Enter email:") do |q|
             q.required true
             q.validate /^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/
@@ -101,9 +100,9 @@ class Session
             q.modify :down
         end
     end
-
-    #Prompt the user to enter or create a password
+    
     def get_password(state)
+        # Prompt the user to enter or create a password depending on the argument passed in
         password = @prompt.mask("#{state} password (min. 8 characters):") do |q|
             q.required true
             q.validate /^[^ ]{8,100}$/
@@ -116,8 +115,8 @@ class Session
     ###### Main menu ######
     #######################
 
-    #List a signed-in user's options
     def main_menu
+        # List a signed-in user's options
         puts
         choice = @prompt.select("What would you like to do, #{@user.name}?") do | menu |
             menu.choice("Search and book flights")
@@ -129,11 +128,11 @@ class Session
         process_main_menu_choice(choice)
     end
 
-    #Process the user's decision on the main menu. Handles all quit/logout commands
     def process_main_menu_choice(input)
+        # Process the user's decision on the main menu. Handles all quit/logout commands
         case input
         when "Search and book flights"
-            search_and_book_flights
+            run_search_flow
         when "View booked flights"
             view_booked_flights    
         when "Cancel a booking"
@@ -153,8 +152,8 @@ class Session
     ###### Flight search ######
     ###########################
 
-    #Run the search and booking flow from start to finish
-    def search_and_book_flights
+    def run_search_flow
+        # Run the search and booking flow from start to finish
         puts
         search_results = search_flights
         valid_results?(search_results)
@@ -165,13 +164,14 @@ class Session
         main_menu
     end
 
-    #Returns search results for user input
     def search_flights
+        # Returns search results for user input
         origin_code = get_airport_code("from")
         destination_code = get_airport_code("to")
         outbound_date = format_date(get_date("departing"))
         cabin_class = get_cabin_class
         puts
+        # Display loading animation while search runs
         results = nil
         spinner = TTY::Spinner.new("Searching for flights :spinner 🛫  :spinner", format: :arrow_pulse)
         spinner.run do
@@ -181,8 +181,8 @@ class Session
         results
     end
 
-    #Validates the search results set
     def valid_results?(results)
+        # Validates the search results set
         if !results
             puts
             puts "No flights found. Please try an alternative route or change your search date."
@@ -190,14 +190,14 @@ class Session
         end
     end
 
-    #Returns the index of the user's chosen flight in the results array
     def select_flight_to_book(results)
+        # Takes in a results array, prompts the user to select a flight to book, and returns the index of their choice
         formatted_results = format_results(results)
         choose_flight(formatted_results)
     end
 
-    #Book the specified flight in the given results set
     def book_flight(flight_hash)
+        # Create flight and booking objects from the search result chosen by the user
         flight = Flight.find_or_create_by(
             flight_hash.filter { | k, v | k != "price" && k != "flight_id" }
         )
@@ -208,21 +208,21 @@ class Session
         )
     end
 
-    #Takes a city name from the user and returns the airport code
     def get_airport_code(from_or_to)
+        # Takes a city name from the user and returns the airport code
         city = @prompt.ask("What city are you flying #{from_or_to}?") do |q|
             q.required true
             q.validate /^[A-Za-z\-& ]{2,30}$/
             q.messages[:valid?] = "Please enter a valid city"
             q.modify :down
         end
-
         code = Search.get_airport_from_city(city)
+        # Reruns function until valid input is provided
         valid_airport?(code) ? code : get_airport_code(from_or_to)
     end
 
-    #Checks that the code returned is valid
     def valid_airport?(code)
+        # Checks that the code returned is valid
         if code
             return true
         else
@@ -232,18 +232,19 @@ class Session
         end
     end
 
-    #Takes a string ("departing" or "returning") and gets departure or return date from user
     def get_date(departing_or_returning)
+        # Takes a string ("departing" or "returning") and gets departure or return date from user
         date = @prompt.ask("What date are you #{departing_or_returning}? DD-MM-YYYY") do |q|
             q.required true
             q.validate /(^(((0[1-9]|1[0-9]|2[0-8])[\/\-](0[1-9]|1[012]))|((29|30|31)[\/\-](0[13578]|1[02]))|((29|30)[\/\-](0[4,6,9]|11)))[\/\-](19|[2-9][0-9])\d\d$)|(^29[\/\-]02[\/\-](19|[2-9][0-9])(00|04|08|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96)$)/
             q.messages[:valid?] = "Dates must use the format DD-MM-YYYY"
         end
+        # Reruns function until valid date is provided
         valid_date?(date) ? date : get_date(departing_or_returning)
     end
 
-    #Checks user's date is valid
     def valid_date?(date)
+        #Checks user's date is not in the past or too far in the future
         datetime = DateTime.strptime(date, "%d-%m-%Y")
         if datetime > DateTime.now.next_year 
             puts "Sorry, you can't book flights after #{DateTime.now.next_year.strftime("%d-%m-%Y")}."
@@ -255,13 +256,14 @@ class Session
         true
     end
 
-    #Formats date for input into the Skyscanner API
     def format_date(date)
+        # Formats date for input into the Skyscanner API
         date_chunks = date.split(/[\-\/\.]/)
         new_date = [date_chunks[2], date_chunks[1], date_chunks[0]].join("-")
     end
 
     def get_cabin_class
+        # Gives the user a choice of cabin class to search
         cabin_class = @prompt.select("What cabin class would you like to book?") do |menu|
             menu.choice('Economy', 'economy')
             menu.choice('Business', 'business')
@@ -269,8 +271,8 @@ class Session
         end
     end
 
-    #Prompt the user to book a flight returned by their search
     def choose_flight(formatted_results)
+        # Prompts the user to book a flight returned by their search
         puts
         choice = @prompt.select("Choose a flight to book") do | menu |
             formatted_results.each_with_index do | result, index |
@@ -282,8 +284,8 @@ class Session
         choice
     end
 
-    #Format the raw search results
     def format_results(results)
+        # Formats the raw search results
         results.map do | flight |
             departure_time = format_time(flight['departure_time'])
             arrival_time = format_time(flight['arrival_time'])
@@ -292,6 +294,7 @@ class Session
     end
 
     def format_time(time)
+        # Format time in user-friendly format
         DateTime.parse(time).strftime("%l:%M %p, %d %b, %Y")
     end
 
@@ -300,8 +303,8 @@ class Session
     ###### View flights ######
     ##########################
 
-    #Show the user the flights they've booked
     def view_booked_flights
+        # Show the user the flights they've booked
         puts
         if @user.bookings.reload[0]
             puts "Here are your bookings:"
@@ -314,8 +317,8 @@ class Session
         process_view_flights_choice(input)    
     end
 
-    #Fetch and format the user's flights array (uses reload to refresh cached values)
     def get_booked_flights
+        # Fetch and format the user's flights array (uses reload to refresh cached values)
         results = @user.flights.reload.each_with_object([]) do | flight, array |
             matching_booking = @user.bookings.find { | booking | booking.flight_id == flight.id }
             booking_details = flight.attributes.reject { | k, v | k == "id" }
@@ -325,8 +328,8 @@ class Session
         format_results(results)
     end
 
-    #Process the user's decision after viewing their flights
     def process_view_flights_choice(input)
+        # Process the user's decision after viewing their flights
         case input
         when "◀️  Main menu"
             main_menu
@@ -348,6 +351,7 @@ class Session
                 get_booked_flights.each_with_index { | result, index | menu.choice(result, index) }
                 menu.choice("◀️  Back")
             end
+            # User's choice is represented by the array index of the flight they select
             process_cancellation(choice)
         else
             puts "You don't have any bookings yet."
@@ -356,6 +360,7 @@ class Session
     end
 
     def process_cancellation(choice)
+        # Destroys the selected flight using the index passed from cancel_booking
         main_menu if choice == "◀️  Back"
         booking_id = @user.bookings.find_by(flight: @user.flights[choice]).id
         Booking.destroy(booking_id)
@@ -368,8 +373,8 @@ class Session
     ###### Change password ######
     #############################
     
-    #Run the change password flow
     def change_password
+        # Run the change password flow
         verify_password
         @user.update(password: get_password("Create new"))
         puts "Success! Password updated."
@@ -377,8 +382,8 @@ class Session
         main_menu
     end
 
-    #Confirm the user's identity before they change their password
     def verify_password
+        # Confirm the user's identity before they change their password
         puts
         old_password = @prompt.mask("Enter your old password:") do |q|
             q.required true
@@ -388,6 +393,7 @@ class Session
         if old_password != @user.password
             puts
             puts "Incorrect password. Please try again."
+            # Reruns the function until a matching password is entered
             verify_password
         else
             true
